@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meteor Madness — Web Simulator (Demo)</title>
+  <!-- Leaflet CDN -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+    defer
+  ></script>
+  <style>
+    :root{--bg:#0b1220;--panel:#121a2a;--acc:#00d4ff;--muted:#8aa0b6;--ok:#2ecc71;--warn:#f1c40f;--danger:#e74c3c}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{display:grid;grid-template-columns:360px 1fr;height:100vh}
+    .left{background:var(--panel);padding:16px;overflow:auto;border-right:1px solid #1e293b}
+    .h{font-size:20px;margin:0 0 8px}
+    .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row{margin-bottom:10px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid #243043;background:#0c1424;color:#fff}
+    button{background:linear-gradient(90deg,#00d4ff,#6a5cff);border:0;font-weight:600;cursor:pointer}
+    button.ghost{background:#0c1424;border:1px solid #243043}
+    .out{background:#0c1424;border:1px dashed #243043;border-radius:12px;padding:10px;font-family:ui-monospace,Consolas,monospace}
+    .kv{display:flex;align-items:center;justify-content:space-between;margin:6px 0}
+    .kv span:first-child{color:#9fb3c8}
+    .tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#0c1424;border:1px solid #243043;color:#9fb3c8;font-size:12px}
+    #map{height:100%}
+    .badges{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .legend{position:absolute;right:12px;top:12px;background:#0c1424cc;color:#cbd5e1;padding:10px;border-radius:10px;border:1px solid #243043;font-size:12px}
+    .legend .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+    /* small screens: stack */
+    @media (max-width: 900px){
+      .wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+      .left{border-right:0;border-bottom:1px solid #1e293b}
+      #map{min-height:60vh}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="left">
+      <h1 class="h">Meteor Madness — Demo</h1>
+      <p class="sub">এই ডেমোটা টয়-ফিজিক্স ব্যবহার করে। হ্যাকাথন প্রোটোটাইপ হিসেবে একদম হালকা—ম্যাপ ক্লিক করে impact point সিলেক্ট করুন, তারপর ইনপুট বদলে ফল দেখুন।</p>
+
+      <div class="badges">
+        <span class="tag">Web: Leaflet.js</span>
+        <span class="tag">No backend</span>
+        <span class="tag">Toy physics</span>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <button id="btnAnimate">Animate impact</button>
+      </div>
+
+      <div class="grid">
+        <div class="row">
+          <label>Asteroid diameter (m)</label>
+          <input id="inDia" type="number" min="1" value="50" />
+        </div>
+        <div class="row">
+          <label>Density (kg/m³)</label>
+          <input id="inRho" type="number" min="500" value="3000" />
+        </div>
+        <div class="row">
+          <label>Speed (km/s)</label>
+          <input id="inVel" type="number" step="0.1" min="1" value="17" />
+        </div>
+        <div class="row">
+          <label>Entry angle (°)</label>
+          <input id="inAng" type="number" min="5" max="90" value="45" />
+        </div>
+        <div class="row">
+          <label>Impact type</label>
+          <select id="inType">
+            <option value="land" selected>Land</option>
+            <option value="ocean">Ocean</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Population density (people/km²)</label>
+          <input id="inPop" type="number" min="0" value="1000" />
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:10px">
+        <div class="row">
+          <label>Deflection shift (km)</label>
+          <input id="inShift" type="number" min="0" value="0" />
+        </div>
+        <div class="row">
+          <label>Deflection bearing (°)</label>
+          <input id="inBear" type="number" min="0" max="360" value="90" />
+        </div>
+        <div class="row">
+          <label>Nuclear standoff reduction (%)</label>
+          <input id="inNuke" type="number" min="0" max="90" value="0" />
+        </div>
+        <div class="row">
+          <label>Evacuation effectiveness (%)</label>
+          <input id="inEvac" type="number" min="0" max="95" value="0" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" id="btnReset">Reset to defaults</button>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <div class="out" id="out">
+          <div class="kv"><span>Lat, Lon</span><span id="outLatLon">—</span></div>
+          <div class="kv"><span>Energy</span><span id="outE">—</span></div>
+          <div class="kv"><span>Crater diameter</span><span id="outCrater">—</span></div>
+          <div class="kv"><span>Damage radii (S/M/L)</span><span id="outR">—</span></div>
+          <div class="kv"><span>Impact type</span><span id="outType">—</span></div>
+          <div class="kv"><span>Est. affected population</span><span id="outPop">—</span></div>
+        </div>
+      </div>
+
+      <div class="sub" style="margin-top:8px">
+        নোট: 1 Mt TNT = 4.184×10¹⁵ J. ব্লাস্ট স্কেলিং ≈ কিউব-রুট; তাই রেডিয়াস ~ E^(1/3)। এই ডেমোতে সরলীকৃত স্কেলিং ব্যবহার করা হয়েছে—বৈজ্ঞানিক বা নীতিগত সিদ্ধান্তে ব্যবহার করবেন না।
+      </div>
+    </aside>
+
+    <main style="position:relative">
+      <div id="map"></div>
+      <div class="legend">
+        <div><span class="dot" style="background:#e11d48"></span> Severe</div>
+        <div><span class="dot" style="background:#f59e0b"></span> Moderate</div>
+        <div><span class="dot" style="background:#22c55e"></span> Light</div>
+        <div id="legTsu" style="display:none"><span class="dot" style="background:#60a5fa"></span> Tsunami range</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ---------------------- Utilities ----------------------
+    const R_EARTH_KM = 6371;
+    const MT_TNT_J = 4.184e15; // joules per megaton TNT
+
+    function fmt(num, unit = ""){
+      if(Number.isNaN(num)) return "—";
+      if(!isFinite(num)) return "∞";
+      const abs = Math.abs(num);
+      let s;
+      if(abs >= 1e3){
+        s = (num).toLocaleString(undefined, { maximumFractionDigits: 1 });
+      } else {
+        s = (num).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      }
+      return unit ? `${s} ${unit}` : s;
+    }
+
+    function kmToDegLat(d){
+      return (d / R_EARTH_KM) * (180/Math.PI);
+    }
+    function kmToDegLon(d, lat){
+      return (d / (R_EARTH_KM * Math.cos(lat*Math.PI/180))) * (180/Math.PI);
+    }
+
+    // ---------------------- Physics (toy) ----------------------
+    function kineticEnergyJ(diameter_m, density, speed_km_s){
+      const r = diameter_m/2;
+      const volume = (4/3)*Math.PI*r*r*r; // m^3
+      const mass = density * volume; // kg
+      const v = speed_km_s*1000; // m/s
+      return 0.5*mass*v*v; // J
+    }
+
+    function effectiveEnergyMt(EJ, angleDeg, nukeReductionPct){
+      // Entry angle reduces energy deposition; simple sin(theta) factor
+      const angleFactor = Math.max(Math.sin(angleDeg*Math.PI/180), 0.15); // floor to avoid zero
+      const nukeFactor = 1 - (Math.min(Math.max(nukeReductionPct,0),90)/100);
+      return (EJ * angleFactor * nukeFactor) / MT_TNT_J; // in megatons
+    }
+
+    function craterDiameterKm(E_mt, type){
+      // Rough scaling: 10 Mt -> ~1.2 km (Barringer-like). D ~ k * E^(1/3)
+      const k = 0.56 * (type==='ocean' ? 0.7 : 1.0); // ocean craters smaller
+      return k * Math.cbrt(Math.max(E_mt, 0));
+    }
+
+    function damageRadiiKm(E_mt){
+      // Cube-root blast scaling, tuned for demo visuals
+      const root = Math.cbrt(Math.max(E_mt, 0));
+      return { severe: 3 * root, moderate: 7 * root, light: 15 * root };
+    }
+
+    function tsunamiRadiusKm(E_mt){
+      // Very rough toy scaling for wave reach from an ocean impact
+      return 20 * Math.pow(Math.max(E_mt,0), 0.25);
+    }
+
+    function popAffected(popDensityPerKm2, radiusKm){
+      const area = Math.PI * radiusKm * radiusKm; // km²
+      return popDensityPerKm2 * area;
+    }
+
+    // ---------------------- Map ----------------------
+    let map;
+    let marker = null;
+    let circles = { severe:null, moderate:null, light:null, tsunami:null, deflectSevere:null, deflectModerate:null, deflectLight:null };
+
+    function initMap(){
+      map = L.map('map', { zoomControl: true }).setView([23.8103, 90.4125], 6); // Dhaka default
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 12, attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+      map.on('click', (e)=>{
+        setImpactLatLng(e.latlng.lat, e.latlng.lng);
+        computeAndDraw();
+      });
+
+      setImpactLatLng(23.8103, 90.4125); // Initialize impact point
+      computeAndDraw();
+    }
+
+    function setImpactLatLng(lat, lon){
+      if(!marker){
+        marker = L.marker([lat, lon]).addTo(map);
+      } else {
+        marker.setLatLng([lat, lon]);
+      }
+      document.getElementById('outLatLon').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    }
+
+    // ---------------------- UI wiring ----------------------
+    const ids = ['inDia','inRho','inVel','inAng','inType','inPop','inShift','inBear','inNuke','inEvac'];
+    window.addEventListener('DOMContentLoaded', () => {
+      ids.forEach(id=> document.getElementById(id).addEventListener('input', ()=> computeAndDraw()));
+      document.getElementById('btnReset').addEventListener('click',()=>{
+        document.getElementById('inDia').value = 50;
+        document.getElementById('inRho').value = 3000;
+        document.getElementById('inVel').value = 17;
+        document.getElementById('inAng').value = 45;
+        document.getElementById('inType').value = 'land';
+        document.getElementById('inPop').value = 1000;
+        document.getElementById('inShift').value = 0;
+        document.getElementById('inBear').value = 90;
+        document.getElementById('inNuke').value = 0;
+        document.getElementById('inEvac').value = 0;
+        computeAndDraw();
+      });
+      document.getElementById('btnAnimate').addEventListener('click', ()=> animateShockwave());
+
+      initMap();
+    });
+
+    // ---------------------- Compute + Draw ----------------------
+    function computeAndDraw(){
+      if(!marker) return;
+      const latlng = marker.getLatLng();
+      const dia = parseFloat(document.getElementById('inDia').value);
+      const rho = parseFloat(document.getElementById('inRho').value);
+      const vel = parseFloat(document.getElementById('inVel').value);
+      const ang = parseFloat(document.getElementById('inAng').value);
+      const type = document.getElementById('inType').value;
+      const pop = Math.max(0, parseFloat(document.getElementById('inPop').value));
+      const shiftKm = Math.max(0, parseFloat(document.getElementById('inShift').value));
+      const bearing = parseFloat(document.getElementById('inBear').value);
+      const nukePct = Math.max(0, Math.min(90, parseFloat(document.getElementById('inNuke').value)));
+      const evacPct = Math.max(0, Math.min(95, parseFloat(document.getElementById('inEvac').value)));
+
+      // Base energy
+      const EJ = kineticEnergyJ(dia, rho, vel);
+      const Emt = effectiveEnergyMt(EJ, ang, nukePct);
+
+      // Outputs
+      const craterKm = craterDiameterKm(Emt, type);
+      const radii = damageRadiiKm(Emt);
+      const tsunamiKm = type==='ocean' ? tsunamiRadiusKm(Emt) : 0;
+
+      // Population (estimate by light radius)
+      let affected = popAffected(pop, radii.light);
+      affected = affected * (1 - (evacPct/100));
+
+      // Update text
+      document.getElementById('outType').textContent = (type === 'ocean' ? 'Ocean' : 'Land');
+      document.getElementById('outE').textContent = `${fmt(Emt,'Mt TNT')}`;
+      document.getElementById('outCrater').textContent = `${fmt(craterKm,'km')}`;
+      document.getElementById('outR').textContent = `${fmt(radii.severe,'km')} / ${fmt(radii.moderate,'km')} / ${fmt(radii.light,'km')}`;
+      document.getElementById('outPop').textContent = `${Math.round(affected).toLocaleString()} ppl`;
+      document.getElementById('legTsu').style.display = (type==='ocean' && tsunamiKm>0)?'block':'none';
+
+      // Draw circles
+      drawCircle('severe', latlng, radii.severe, {color:'#e11d48', fillColor:'#e11d48', fillOpacity:0.25});
+      drawCircle('moderate', latlng, radii.moderate, {color:'#f59e0b', fillColor:'#f59e0b', fillOpacity:0.18});
+      drawCircle('light', latlng, radii.light, {color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.12});
+
+      if(type==='ocean' && tsunamiKm>0){
+        drawCircle('tsunami', latlng, tsunamiKm, {color:'#60a5fa', fillColor:'#60a5fa', fillOpacity:0.10, dashArray:'4 6'});
+      } else {
+        removeCircle('tsunami');
+      }
+
+      // Deflection: draw shifted set if any
+      if(shiftKm>0){
+        const lat2 = latlng.lat + kmToDegLat( shiftKm * Math.cos(bearing*Math.PI/180) );
+        const lon2 = latlng.lng + kmToDegLon( shiftKm * Math.sin(bearing*Math.PI/180), latlng.lat );
+        drawCircle('deflectSevere', {lat:lat2,lng:lon2}, radii.severe, {color:'#e11d48', fillColor:'#e11d48', fillOpacity:0.04, dashArray:'6 6'});
+        drawCircle('deflectModerate', {lat:lat2,lng:lon2}, radii.moderate, {color:'#f59e0b', fillColor:'#f59e0b', fillOpacity:0.04, dashArray:'6 6'});
+        drawCircle('deflectLight', {lat:lat2,lng:lon2}, radii.light, {color:'#22c55e', fillColor:'#22c55e', fillOpacity:0.04, dashArray:'6 6'});
+      } else {
+        removeCircle('deflectSevere');
+        removeCircle('deflectModerate');
+        removeCircle('deflectLight');
+      }
+    }
+
+    function drawCircle(key, latlng, radiusKm, style){
+      const opts = Object.assign({weight:2}, style||{});
+      if(circles[key]){
+        circles[key].setLatLng(latlng).setRadius(radiusKm*1000).setStyle(opts);
+      } else {
+        circles[key] = L.circle(latlng, {radius: radiusKm*1000, ...opts}).addTo(map);
+      }
+    }
+
+    function removeCircle(key){
+      if(circles[key]){
+        map.removeLayer(circles[key]);
+        circles[key]=null;
+      }
+    }
+
+    // ---------------------- Shockwave animation ----------------------
+    let animHandle = null;
+    function animateShockwave(){
+      if(!marker) return;
+      const latlng = marker.getLatLng();
+      const maxR = circles.light ? circles.light.getRadius() : 30000; // meters
+      let r = 500; // start radius m
+      const wave = L.circle(latlng, {radius:r, color:'#93c5fd', fillColor:'#93c5fd', fillOpacity:0.1, weight:2}).addTo(map);
+      if(animHandle){
+        clearInterval(animHandle);
+        animHandle=null;
+      }
+      animHandle = setInterval(()=>{
+        r *= 1.25; // expand fast
+        const t = Math.min(r/maxR, 1);
+        wave.setRadius(Math.min(r, maxR));
+        wave.setStyle({opacity: 0.6*(1 - t), fillOpacity: 0.2*(1 - t)});
+        if(r >= maxR){
+          clearInterval(animHandle);
+          animHandle=null;
+          setTimeout(()=> map.removeLayer(wave), 400);
+        }
+      }, 60);
+    }
+
+    // ---------------------- Hints to extend ----------------------
+    console.log('%cIdeas to extend:', 'color:#00d4ff');
+    console.log('- Replace toy physics with published scaling laws (e.g., Holsapple).');
+    console.log('- Fetch real objects from NASA NeoWs (asteroid diameters, velocities).');
+    console.log('- Integrate population rasters (e.g., WorldPop) to estimate impact better.');
+    console.log('- Switch map to CesiumJS for globe + atmosphere, or add Three.js flare.');
+    console.log('- Add timeline: approach → entry → impact → recovery.');
+  </script>
+</body>
+</html>
