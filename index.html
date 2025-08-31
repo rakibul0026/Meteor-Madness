@@ -1,125 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Meteor Madness — NASA Data Demo</title>
-  <meta charset="utf-8">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <style>
-    body{margin:0;font-family:sans-serif;background:#0b1220;color:white;
-         display:grid;grid-template-columns:360px 1fr;height:100vh}
-    aside{background:#121a2a;padding:14px;overflow:auto}
-    h2{margin:0 0 10px}
-    label{font-size:12px;color:#8aa0b6;display:block;margin:6px 0}
-    input,select,button{width:100%;padding:8px;margin-bottom:8px;border-radius:6px;border:none}
-    button{cursor:pointer;background:#00d4ff;color:#000;font-weight:bold}
-    .out{background:#0c1424;padding:8px;margin-top:8px;border-radius:6px;font-size:13px}
-    #map{height:100%}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meteor Madness 🌍☄ — NASA 3D Edition</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- html2canvas for map export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Model Viewer -->
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<style>
+:root {--bg:#0b1220;--panel:#101829;--panel-2:#0e1526;--acc:#00d4ff;--muted:#90a7c4;--ok:#2ecc71;--warn:#f1c40f;--danger:#e74c3c;--border:#1f2a44;}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;font-family:sans-serif;color:#eef3ff;}
+body{display:grid;grid-template-columns:58% 42%;grid-template-rows:100%;background:radial-gradient(1200px 800px at 15% -10%,#14213a 0%,#0b1220 35%) fixed;}
+#map{width:100%;height:100vh;border-right:1px solid var(--border);position:relative;}
+.hud{position:absolute;top:16px;left:16px;display:flex;gap:12px;flex-wrap:wrap;background:rgba(16,24,41,0.7);padding:10px 12px;border-radius:14px;border:1px solid var(--border);backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(0,0,0,0.35);}
+.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0b1220;font-size:12px;color:var(--muted);}
+.legend{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);}
+.dot{width:10px;height:10px;border-radius:999px;display:inline-block;}
+#controls{height:100vh;overflow-y:auto;padding:16px;background:var(--panel);display:grid;grid-template-rows:auto auto auto 1fr;gap:14px;}
+.card{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 8px 18px rgba(0,0,0,.25);margin-bottom:12px;}
+.output{background:#0b1327;border:1px solid var(--border);padding:10px;border-radius:10px;color:#d7e3ff;margin-top:8px;}
+#viewerWrap{position:relative;height:360px;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+model-viewer{width:100%;height:100%;background:radial-gradient(900px 400px at 50% 10%,#0f1b34 0%,#0b1220 60%);--poster-color:transparent;--progress-bar-color:var(--acc);}
+input, select, button{width:100%;padding:10px 12px;margin-top:6px;border-radius:10px;border:1px solid var(--border);background:#0c1428;color:#e7efff;font-weight:600;}
+button{background:var(--acc);color:#051019;border:none;cursor:pointer;transition:transform .05s ease;}
+button:hover{transform: translateY(-1px);}
+.extra-panel{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px;margin-top:12px;}
+.extra-panel h4{margin:0 0 6px;font-size:14px;color:var(--acc);}
+.extra-panel button{margin-top:4px;}
+@media(max-width:1100px){body{grid-template-columns:1fr}#map{height:52vh}#controls{height:auto}}
+</style>
 </head>
 <body>
-  <aside>
-    <h2>Meteor Madness 🌍☄</h2>
-    <label>Select real asteroid (NASA NeoWs)</label>
-    <select id="asteroidSelect"><option>Loading...</option></select>
-    
-    <label>Asteroid diameter (m)</label>
-    <input id="inDia" type="number" value="50" />
-    
-    <label>Speed (km/s)</label>
-    <input id="inVel" type="number" value="17" />
-    
-    <label>Entry angle (°)</label>
-    <input id="inAng" type="number" value="45" />
-    
-    <label>Impact type</label>
-    <select id="inType">
-      <option value="land">Land</option>
-      <option value="ocean">Ocean</option>
-    </select>
-    
-    <button onclick="computeAndDraw()">Run Simulation</button>
-    <div class="out" id="out"></div>
-  </aside>
+
+<!-- LEFT: Map -->
+<div id="mapWrap">
   <div id="map"></div>
+  <div class="hud">
+    <span class="chip">🗺️ Click anywhere to set impact</span>
+    <div class="legend">
+      <span><i class="dot" style="background:#e74c3c"></i> severe</span>
+      <span><i class="dot" style="background:#f39c12"></i> high</span>
+      <span><i class="dot" style="background:#f1c40f"></i> medium</span>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Controls & 3D -->
+<aside id="controls">
+  <!-- Step 1: 3D Model -->
+  <div class="card">
+    <h3>Asteroid 3D Model</h3>
+    <div id="viewerWrap">
+      <model-viewer id="asteroidViewer"
+        src="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/b/Bennu_1_1.glb"
+        ar ar-modes="webxr scene-viewer quick-look"
+        camera-controls shadow-intensity="1" exposure="0.9" auto-rotate
+        interaction-prompt="none"></model-viewer>
+    </div>
+    <select id="modelPicker" style="margin-top:8px;">
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/b/Bennu_1_1.glb">(101955) Bennu</option>
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/e/Eros_1_10.glb">(433) Eros</option>
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/Itokawa_1_1.glb">(25143) Itokawa</option>
+    </select>
+  </div>
+
+  <!-- Step 2: Simulation -->
+  <div class="card">
+    <h3>Simulation Controls</h3>
+    <label>Asteroid Diameter (m) <input type="number" id="size" value="100"></label>
+    <label>Velocity (km/s) <input type="number" id="velocity" value="20"></label>
+    <label>Impact Angle (°) <input type="number" id="angle" value="45"></label>
+    <label>Population Density (/km²) <input type="number" id="density" value="1000"></label>
+    <button onclick="simulate()">▶ Simulate Impact</button>
+    <div id="output" class="output"></div>
+  </div>
+
+  <!-- Step 4: Strategy Explorer -->
+  <div class="extra-panel">
+    <h4>Step 4: Strategy Explorer</h4>
+    <button onclick="deflectionMission()">🚀 Deflection Mission</button>
+    <button onclick="evacuationPlan()">🏃 Evacuation Plan</button>
+    <div id="strategyOutput" class="output" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- Step 5: Export -->
+  <div class="extra-panel">
+    <h4>Step 5: Export Results</h4>
+    <button onclick="exportPDF()">📄 Export PDF</button>
+    <button onclick="exportMap()">🖼️ Export Map PNG</button>
+  </div>
+</aside>
 
 <script>
-const MT_TNT_J = 4.184e15;
-const R_EARTH_KM=6371;
+const map = L.map('map').setView([20,0],2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap contributors' }).addTo(map);
 
-let map = L.map('map').setView([23.81,90.41],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let marker=L.marker([23.81,90.41]).addTo(map);
+let impactLat=null, impactLng=null, impactMarker=null;
+let lastCircle=null;
 
-let circles={};
+// Map click handler
+map.on('click', e => {
+  impactLat=e.latlng.lat; impactLng=e.latlng.lng;
+  if(impactMarker) map.removeLayer(impactMarker);
+  impactMarker=L.marker([impactLat,impactLng]).addTo(map).bindPopup("Impact Location").openPopup();
+});
 
-function kineticEnergyJ(d_m, v_km_s){
-  const r=d_m/2;
-  const vol=(4/3)*Math.PI*r**3;
-  const mass=3000*vol; // assumed density
-  return 0.5*mass*(v_km_s*1000)**2;
+// 3D model picker
+const modelPicker = document.getElementById('modelPicker');
+const viewer = document.getElementById('asteroidViewer');
+modelPicker.addEventListener('change',()=>{viewer.src=modelPicker.value;});
+
+// Simulation
+function simulate(){
+  const size=parseFloat(document.getElementById('size').value);
+  const velocity=parseFloat(document.getElementById('velocity').value);
+  const angle=parseFloat(document.getElementById('angle').value)*Math.PI/180;
+  const density=parseFloat(document.getElementById('density').value);
+
+  if(impactLat===null || impactLng===null){ alert('Click on map to set impact!'); return; }
+
+  const volume=(4/3)*Math.PI*Math.pow(size/2,3);
+  const rho=3000;
+  const mass=volume*rho;
+  const vms=velocity*1000;
+  const energy=0.5*mass*vms*vms;
+  const energyMT=energy/4.184e15;
+  const coupling=Math.max(0.2,Math.sin(angle));
+  const effectiveMT=energyMT*coupling;
+  const crater=(size*velocity/2).toFixed(1);
+  const damageRadius=Math.cbrt(Math.max(0,effectiveMT))*2;
+  const affectedPop=Math.round(Math.PI*Math.pow(damageRadius,2)*density/1e6);
+
+  document.getElementById('output').innerHTML=`
+    <b>Impact Results</b><br>
+    Crater size: ${crater} m<br>
+    Energy Released: ${effectiveMT.toFixed(2)} Mt TNT<br>
+    Damage radius: ${damageRadius.toFixed(1)} km<br>
+    Population affected: ~${affectedPop} million
+  `;
+
+  // Draw risk circle
+  if(lastCircle) map.removeLayer(lastCircle);
+  lastCircle=L.circle([impactLat,impactLng],{radius:damageRadius*1000,color:'#e74c3c',fillOpacity:0.2}).addTo(map);
 }
 
-function effectiveEnergyMt(EJ,angle){
-  return (EJ*Math.sin(angle*Math.PI/180))/MT_TNT_J;
+// Strategy Explorer
+function deflectionMission(){
+  document.getElementById('strategyOutput').innerHTML="🚀 Initiating asteroid deflection mission… Calculating trajectory adjustments.";
 }
 
-function damageRadiiKm(E_mt){
-  const root=Math.cbrt(E_mt);
-  return {sev:3*root, mod:7*root, light:15*root};
+function evacuationPlan(){
+  document.getElementById('strategyOutput').innerHTML=`🏃 Evacuation Plan Activated:<br>
+Relocate population within 300 km of projected ground zero;<br>
+Prioritize hospitals, schools, and transit corridors.<br>
+Stage supplies upwind of predicted fallout zone.`;
 }
 
-function drawCircle(key,latlng,r,style){
-  if(circles[key]) map.removeLayer(circles[key]);
-  circles[key]=L.circle(latlng,{radius:r*1000,...style}).addTo(map);
+// Export PDF
+function exportPDF(){
+  if(!document.getElementById('output').innerText) { alert('Run simulation first!'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text("Meteor Madness - Impact Report", 20, 20);
+  const text = document.getElementById('output').innerText + "\n\n" + document.getElementById('strategyOutput').innerText;
+  doc.setFontSize(12);
+  doc.text(text, 20, 40);
+  doc.save("impact_report.pdf");
 }
 
-function computeAndDraw(){
-  const latlng=marker.getLatLng();
-  const d=parseFloat(document.getElementById('inDia').value);
-  const v=parseFloat(document.getElementById('inVel').value);
-  const a=parseFloat(document.getElementById('inAng').value);
-  const type=document.getElementById('inType').value;
-  
-  const EJ=kineticEnergyJ(d,v);
-  const Emt=effectiveEnergyMt(EJ,a);
-  const radii=damageRadiiKm(Emt);
-  
-  drawCircle('sev',latlng,radii.sev,{color:'red',fillColor:'red',fillOpacity:0.2});
-  drawCircle('mod',latlng,radii.mod,{color:'orange',fillColor:'orange',fillOpacity:0.15});
-  drawCircle('light',latlng,radii.light,{color:'green',fillColor:'green',fillOpacity:0.1});
-  
-  document.getElementById('out').innerHTML=
-    `Energy: ${Emt.toFixed(2)} Mt TNT<br>
-     Damage radius: ${radii.light.toFixed(1)} km<br>
-     Type: ${type}`;
+// Export Map PNG
+function exportMap(){
+  html2canvas(document.getElementById('map')).then(canvas=>{
+    const link=document.createElement('a');
+    link.download="map.png";
+    link.href=canvas.toDataURL("image/png");
+    link.click();
+  });
 }
-
-// Fetch NASA NeoWs data
-async function loadAsteroids(){
-  try{
-    const res=await fetch('https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=DEMO_KEY');
-    const data=await res.json();
-    const select=document.getElementById('asteroidSelect');
-    select.innerHTML="";
-    
-    data.near_earth_objects.slice(0,20).forEach(obj=>{
-      const opt=document.createElement('option');
-      const d=obj.estimated_diameter.meters.estimated_diameter_max.toFixed(0);
-      const v=obj.close_approach_data[0]?.relative_velocity.kilometers_per_second;
-      opt.value=JSON.stringify({d:d,v:v});
-      opt.textContent=`${obj.name} (D≈${d}m, v≈${parseFloat(v).toFixed(1)} km/s)`;
-      select.appendChild(opt);
-    });
-    
-    select.addEventListener('change',()=>{
-      const val=JSON.parse(select.value);
-      document.getElementById('inDia').value=val.d;
-      document.getElementById('inVel').value=parseFloat(val.v).toFixed(1);
-    });
-  }catch(e){console.error(e);}
-}
-loadAsteroids();
 </script>
 </body>
 </html>
