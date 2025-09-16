@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NASA Asteroid Watch – 3D Models</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%);
+      color: #eef3ff;
+    }
+    nav {
+      background: rgba(16, 24, 41, 0.9);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav a {
+      color: #eef3ff;
+      margin-right: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s ease;
+    }
+    nav a:hover {
+      color: #00f0ff;
+    }
+    h2 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 2.5rem;
+      text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+    }
+
+    /* 🔥 Full width section */
+    .viewer-full {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(900px 400px at 50% 10%, #0f1b34 0%, #0b1220 60%);
+    }
+
+    .controls {
+      padding: 20px;
+      background: rgba(16,24,41,0.85);
+    }
+    h3 {
+      margin-top: 10px;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,255,255,0.2);
+      background: #0c1428;
+      color: #eef3ff;
+      font-weight: 600;
+    }
+    button {
+      cursor: pointer;
+      background: #00d4ff;
+      border: none;
+      transition: transform .05s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav>
+    <a href="index.html">Simulation & History</a>
+    <a href="controls.html">Simulation Controls</a>
+    <a href="asteroid_watch.html">Eyes on Asteroids 🌍✂️</a>
+  </nav>
+
+  <!-- Title -->
+  <h2>NASA Asteroid Watch – 3D Models</h2>
+
+  <!-- Full width 3D asteroid viewer -->
+  <div class="viewer-full">
+    <model-viewer id="asteroidViewer" 
+      src="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/b/Bennu_1_1.glb"
+      ar ar-modes="webxr scene-viewer quick-look"
+      camera-controls shadow-intensity="1" exposure="0.9"
+      auto-rotate interaction-prompt="none">
+    </model-viewer>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <h3>Asteroid Models</h3>
+    <select id="modelPicker">
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/b/Bennu_1_1.glb">(101955) Bennu</option>
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/r/Ryugu_1_1.glb">(162173) Ryugu</option>
+      <option value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Apophis.glb">(99942) Apophis</option>
+      <option value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Psyche.glb">(16) Psyche</option>
+      <option value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Vesta.glb">(4) Vesta</option>
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/e/Eros_1_10.glb">(433) Eros</option>
+      <option value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/Itokawa_1_1.glb">(25143) Itokawa</option>
+    </select>
+
+    <h3>Simulation Controls</h3>
+    <label>Asteroid Name / NEO ID
+      <input id="neoId" placeholder="e.g., 101955 or Apophis">
+    </label>
+    <label>NASA API Key
+      <input id="nasaKey" value="DEMO_KEY">
+    </label>
+    <button onclick="fetchNEO()">Fetch NEO Data</button>
+    <div id="output" style="margin-top:10px;white-space:pre-wrap;">Simulation output will appear here.</div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modelPicker = document.getElementById('modelPicker');
+      const viewer = document.getElementById('asteroidViewer');
+      modelPicker.addEventListener('change', () => { viewer.src = modelPicker.value; });
+    });
+
+    async function fetchNEO(){
+      const id = document.getElementById('neoId').value.trim();
+      const key = document.getElementById('nasaKey').value.trim() || 'DEMO_KEY';
+      if(!id){ alert('Enter a NEO name or ID'); return; }
+      try{
+        let url = /^\d+$/.test(id)
+          ? `https://api.nasa.gov/neo/rest/v1/neo/${id}?api_key=${key}`
+          : `https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=${key}&size=20`;
+        const res = await fetch(url);
+        const data = await res.json();
+        let neo = data.id ? data : data.near_earth_objects.find(n => n.name.toLowerCase().includes(id.toLowerCase())) || data.near_earth_objects[0];
+        if(!neo){ document.getElementById('output').innerText='NEO not found'; return; }
+        document.getElementById('output').innerText = 
+          `Name: ${neo.name}\nID: ${neo.id}\nEstimated Diameter: ${neo.estimated_diameter.meters.estimated_diameter_max.toFixed(2)} m`;
+      }catch(err){ 
+        console.error(err); 
+        document.getElementById('output').innerText='Fetch failed'; 
+      }
+    }
+  </script>
+</body>
+</html>
