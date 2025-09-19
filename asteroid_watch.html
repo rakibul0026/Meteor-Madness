@@ -1,88 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NASA Asteroid Watch</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap"
-      rel="stylesheet">
-    <style>
-  body {
-    margin: 0;
-    font-family: 'Orbitron', sans-serif;
-    background: linear-gradient(135deg, #0b1220 0%, #1a2332 100%);
-    color: #eef3ff;
-    overflow-x: hidden;
-  }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NASA Asteroid Watch – Nebula Nexus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'ui-sans-serif', 'system-ui', sans-serif;
+      background: radial-gradient(ellipse at bottom, #0b1220 0%, #05010a 100%);
+      color: #eef3ff;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
 
-  nav {
-    background: rgba(16, 24, 41, 0.9);
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    backdrop-filter: blur(8px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+    /* Starfield background */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+      opacity: 0.2;
+      z-index: -1;
+      animation: twinkle 10s infinite;
+    }
 
-  nav a {
-    color: #eef3ff;
-    margin-right: 20px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s ease;
-  }
+    @keyframes twinkle {
+      from {opacity: 0.2;}
+      50% {opacity: 0.4;}
+      to {opacity: 0.2;}
+    }
 
-  nav a:hover {
-    color: #00f0ff;
-  }
+    h2 {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00f0ff, 0 0 25px #00f0ff;
+      animation: glowText 3s infinite alternate;
+    }
 
-  h2 {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 2.5rem;
-    text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
-  }
+    @keyframes glowText {
+      from { text-shadow: 0 0 10px #00f0ff, 0 0 25px #00f0ff; }
+      to { text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+    }
 
-  .iframe-container {
-    width: 90%;
-    max-width: 1400px;
-    height: 85vh;
-    margin: 40px auto;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 0 40px rgba(0, 255, 255, 0.3), 0 0 60px rgba(0, 255, 255, 0.2);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    animation: fadeIn 1s ease-in-out;
-  }
+    .iframe-container {
+      width: 90%;
+      max-width: 1400px;
+      height: 85vh;
+      margin: 40px auto;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 30px #00f0ff88, 0 0 60px #00f0ff44;
+      animation: fadeIn 1s ease-in-out;
+    }
 
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
 
-  @keyframes fadeIn {
-    from {opacity: 0; transform: translateY(20px);}
-    to {opacity: 1; transform: translateY(0);}
-  }
+    canvas {
+      background: #000;
+      border-radius: 15px;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 20px #00f0ff66;
+    }
 
-  
-</style>
-  </head>
-  <body>
-    <nav>
-      <a href="index.html">Simulation & History</a>
-      <a href="controls.html">Simulation Controls</a>
-      <a href="asteroid_watch.html">Eyes on Asteroids 🌍✂️</a>
-    </nav>
+    .simulation-container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 40px auto;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
 
-    <h2>NASA Asteroid Watch – All Asteroids</h2>
+    #controls {
+      width: 320px;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.3);
+      animation: fadeIn 1.5s ease-in-out;
+    }
 
-    <div class="iframe-container">
-      <iframe src="https://eyes.nasa.gov/apps/asteroids/"></iframe>
+    button {
+      margin: 10px 0;
+      padding: 14px;
+      width: 100%;
+      background: linear-gradient(135deg, #00f0ff, #0088ff);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0,255,255,0.6);
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #ff00ff, #6600ff);
+      box-shadow: 0 0 25px rgba(255,0,255,0.7);
+      transform: scale(1.05);
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+
+    .desc h4 {
+      color: #ffcc00;
+      text-shadow: 0 0 8px #ffcc00aa;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body class="font-sans">
+
+  <!-- Nebula Nexus Header -->
+  <header class="bg-black/70 backdrop-blur-md sticky top-0 z-50 shadow-lg shadow-cyan-500/30">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-2xl font-bold text-yellow-400"> Nebula Nexus</h1>
+      <nav class="space-x-6 text-lg">
+        <a href="p2.html" class="hover:text-cyan-400 transition">Home</a>
+        <a href="controls.html" class="hover:text-cyan-400 transition">Asteroids Effect </a>
+        <a href="dashboard.html" class="hover:text-cyan-400 transition">Risk Dashboard</a>
+        <a href="p.html" class="hover:text-cyan-400 transition">NASA Research &History</a>
+        <a href="asteroid_watch.html" class="hover:text-cyan-400 transition">Asteroid Tracking & Defense</a>
+        <a href="team_member.html" class="hover:text-cyan-400 transition">Team Member</a>
+      </nav>
     </div>
-  </body>
+  </header>
+
+  <!-- Section 1: NASA Asteroid Watch -->
+  <h2>🌍 NASA Asteroid Watch – Live Data</h2>
+  <div class="iframe-container">
+    <iframe src="https://eyes.nasa.gov/apps/asteroids/"></iframe>
+  </div>
+
+  <!-- Section 2: Asteroid Deflection Simulation -->
+  <h2>🚀 Asteroid Deflection Simulation</h2>
+  <div class="simulation-container">
+    <canvas id="simCanvas" width="600" height="600"></canvas>
+    <div id="controls">
+      <h3 class="text-2xl mb-3 font-bold text-cyan-400">Deflection Methods</h3>
+      <button onclick="applyKinetic()">Kinetic Impact 🚀</button>
+      <button onclick="applySlowPush()">Slow Push/Pull ⚖️</button>
+      <button onclick="applyNuclear()">Nuclear Deflection ☢️</button>
+      <button onclick="resetSim()">Reset Simulation 🔄</button>
+      <div id="message" class="mt-3"></div>
+
+      <!-- Descriptions -->
+      <div class="desc mt-4">
+        <h4 class="text-lg font-bold mt-4">Kinetic Method 🚀</h4>
+        <p>Spacecraft collides with asteroid, altering its path.</p>
+        <p><strong>Advantages:</strong> Tested, feasible.</p>
+        <p><strong>Limitations:</strong> Less effective for large asteroids.</p>
+
+        <h4 class="text-lg font-bold mt-4">Slow Push/Pull ⚖️</h4>
+        <p>Gradual trajectory change using gravity tractor, solar sail, or lasers.</p>
+        <p><strong>Advantages:</strong> Controlled, safe.</p>
+        <p><strong>Limitations:</strong> Requires long lead time.</p>
+
+        <h4 class="text-lg font-bold mt-4">Nuclear Method ☢️</h4>
+        <p>Nuclear explosion alters asteroid’s path.</p>
+        <p><strong>Advantages:</strong> Fast, powerful.</p>
+        <p><strong>Limitations:</strong> Risk of fragmentation.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Simulation -->
+  <script>
+  const canvas = document.getElementById("simCanvas");
+  const ctx = canvas.getContext("2d");
+
+  let asteroid, earth, running, slowPushActive, nuclearFlash, kineticImpact, debris;
+
+  function init() {
+    asteroid = {x: 50, y: 300, vx: 2, vy: -0.5, r: 12, color: "white", trail: []};
+    earth = {x: 500, y: 300, r: 40};
+    running = true;
+    slowPushActive = false;
+    nuclearFlash = 0;
+    kineticImpact = false;
+    debris = [];
+  }
+
+  function drawEarth() {
+    ctx.beginPath();
+    ctx.arc(earth.x, earth.y, earth.r, 0, Math.PI*2);
+    ctx.fillStyle = "blue";
+    ctx.fill();
+    ctx.strokeStyle = "green";
+    ctx.stroke();
+  }
+
+  function drawAsteroid() {
+    ctx.beginPath();
+    ctx.arc(asteroid.x, asteroid.y, asteroid.r, 0, Math.PI*2);
+    ctx.fillStyle = asteroid.color;
+    ctx.fill();
+  }
+
+  function drawTrail() {
+    if (asteroid.trail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(asteroid.trail[0].x, asteroid.trail[0].y);
+      for (let p of asteroid.trail) ctx.lineTo(p.x, p.y);
+      ctx.strokeStyle = "yellow";
+      ctx.stroke();
+    }
+  }
+
+  function drawDebris() {
+    debris.forEach(d => {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 2, 0, Math.PI*2);
+      ctx.fillStyle = "orange";
+      ctx.fill();
+      d.x += d.vx;
+      d.y += d.vy;
+      d.life--;
+    });
+    debris = debris.filter(d => d.life > 0);
+  }
+
+  function updateAsteroid() {
+    asteroid.x += asteroid.vx;
+    asteroid.y += asteroid.vy;
+    asteroid.trail.push({x: asteroid.x, y: asteroid.y});
+    if (asteroid.trail.length > 100) asteroid.trail.shift();
+
+    if (slowPushActive) {
+      asteroid.vy -= 0.001;
+      ctx.beginPath();
+      ctx.arc(asteroid.x+20, asteroid.y-20, 5, 0, Math.PI*2);
+      ctx.fillStyle = "lightgreen";
+      ctx.fill();
+    }
+
+    if (nuclearFlash > 0) {
+      ctx.fillStyle = `rgba(255,255,0,${nuclearFlash/20})`;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      nuclearFlash--;
+    }
+  }
+
+  function loop() {
+    if (!running) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawEarth();
+    drawTrail();
+    drawAsteroid();
+    drawDebris();
+    updateAsteroid();
+    requestAnimationFrame(loop);
+  }
+
+  function applyKinetic() {
+    asteroid.vx += 0.5;
+    asteroid.vy -= 0.5;
+    asteroid.color = "orange";
+    kineticImpact = true;
+    document.getElementById("message").innerText = "🚀 Kinetic Impact Applied!";
+  }
+
+  function applySlowPush() {
+    slowPushActive = true;
+    asteroid.color = "lightgreen";
+    document.getElementById("message").innerText = "⚖️ Slow Push/Pull Applied!";
+  }
+
+  function applyNuclear() {
+    asteroid.vx += 2;
+    asteroid.vy -= 2;
+    asteroid.color = "red";
+    nuclearFlash = 20;
+    for (let i=0;i<30;i++) {
+      debris.push({x: asteroid.x, y: asteroid.y, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4, life:50});
+    }
+    document.getElementById("message").innerText = "☢️ Nuclear Deflection Applied!";
+  }
+
+  function resetSim() {
+    init();
+    document.getElementById("message").innerText = "";
+    loop();
+  }
+
+  init();
+  loop();
+  </script>
+</body>
 </html>
