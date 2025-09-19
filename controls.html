@@ -64,11 +64,23 @@ body{padding-top:50px;} /* offset for fixed header */
 
     <!-- HEADER NAV -->
     <header>
-      <a href="index.html">Simulation & History</a>
-      <a href="controls.html">Simulation Controls</a>
-      <a href="asteroid_watch.html">NASA Asteroid Watch</a>
+      <h1
+        style="font-weight:700; color:#FFD700; font-size:24px; display:inline-block; margin-right:40px;">
+        Nebula Nexus
+      </h1>
+      <a href="p2.html" style="font-size:18px; font-weight:normal;">Home</a>
+      <a href="controls.html"
+        style="font-size:18px; font-weight:normal;">Asteroids Effect </a>
+      <a href="dashboard.html" style="font-size:18px; font-weight:normal;">Risk
+        Dashboard</a>
+      <a href="p.html" style="font-size:18px; font-weight:normal;">NASA Research
+        & History</a>
+      <a href="asteroid_watch.html"
+        style="font-size:18px; font-weight:normal;">Asteroid Tracking &
+        Defense</a>
+      <a href="team_member.html"
+        style="font-size:18px; font-weight:normal;">Team Members</a>
     </header>
-
     <!-- LEFT: Map -->
     <div id="mapWrap">
       <div id="map"></div>
@@ -95,141 +107,139 @@ body{padding-top:50px;} /* offset for fixed header */
             interaction-prompt="none"></model-viewer>
         </div>
         <select id="modelPicker" style="margin-top:8px;">
+
           <option
             value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/b/Bennu_1_1.glb">(101955)
             Bennu</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/a/Apophis_1_1.glb">Apophis</option>
+            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/r/Ryugu_1_1.glb">(162173)
+            Ryugu</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/Itokawa_1_1.glb">Itokawa</option>
+            value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Apophis.glb">(99942)
+            Apophis</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/e/Eros_1_10.glb">Eros</option>
+            value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Psyche.glb">(16)
+            Psyche</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/p/Psyche_1_1.glb">Psyche</option>
+            value="https://nasa-public-data.s3.amazonaws.com/3dmodels/Vesta.glb">(4)
+            Vesta</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/d/Didymos_1_1.glb">Didymos
-            and Dimorphos</option>
+            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/e/Eros_1_10.glb">(433)
+            Eros</option>
           <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/Ida_1_1.glb">Ida
-            and Dactyl</option>
-          <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/v/Vesta_1_1.glb">Vesta</option>
-          <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/yr4/2024_YR4_1_1.glb">2024
-            YR4</option>
-          <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/dj/Donaldjohanson_1_1.glb">Donaldjohanson</option>
-          <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/s/Selam_1_1.glb">Selam</option>
-          <option
-            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/dk/Dinkinesh_1_1.glb">Dinkinesh</option>
-        </select>
-        <small>Tip: pick a model to visualize composition/shape. These are demo
-          GLBs from NASA.</small>
-      </div>
+            value="https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/Itokawa_1_1.glb">(25143)
+            Itokawa</option>
+          <small>Tip: pick a model to visualize composition/shape. These are
+            demo
+            GLBs from NASA.</small>
+        </div>
 
-      <!-- Simulation -->
-      <div class="card">
-        <h3>Simulation Controls</h3>
+        <!-- Simulation -->
+        <div class="card">
+          <h3>Simulation Controls</h3>
 
-        <div class="row">
-          <div class="col">
-            <label>Asteroid Name / NEO ID
-              <input id="neoId" placeholder="e.g., Impactor-2025 or 101955" />
-            </label>
+          <div class="row">
+            <div class="col">
+              <label>Asteroid Name / NEO ID
+                <input id="neoId" placeholder="e.g., Impactor-2025 or 101955" />
+              </label>
+            </div>
+            <div style="width:140px">
+              <label>NASA API Key
+                <input id="nasaKey"
+                  value="pek5nQn36uT5HyKQqJdq5PRAuhcZSlbSXwePmIFe" />
+              </label>
+            </div>
           </div>
-          <div style="width:140px">
-            <label>NASA API Key
-              <input id="nasaKey"
-                value="pek5nQn36uT5HyKQqJdq5PRAuhcZSlbSXwePmIFe" />
-            </label>
+
+          <div class="row">
+            <div class="col">
+              <label>Asteroid Diameter (m)
+                <input type="number" id="size" value="100" min="0.1"
+                  step="0.1" />
+              </label>
+            </div>
+            <div class="col">
+              <label>Density (kg/m³)
+                <input type="number" id="densityInput" value="3000" min="500"
+                  step="10" />
+              </label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>Velocity (km/s)
+                <input type="number" id="velocity" value="20" step="0.1" />
+              </label>
+            </div>
+            <div class="col">
+              <label>Impact Angle (°)
+                <input type="number" id="angle" value="45" step="1" />
+              </label>
+            </div>
+          </div>
+
+          <label>Population Density (/km²)
+            <input type="number" id="popDensity" value="1000" />
+          </label>
+
+          <label>Uncertainty Cone Half-Angle (°)
+            <input type="number" id="uncertaintyDeg" value="5" min="0"
+              max="45" />
+          </label>
+
+          <label>Monte Carlo Samples
+            <input type="number" id="samples" value="200" min="10" step="10" />
+          </label>
+
+          <label>Deflection (Δv in m/s) — affects energy/impact probability
+            <input type="range" id="deflect" min="0" max="1000" value="0" />
+            <small id="deflectVal">Δv = 0 m/s</small>
+          </label>
+
+          <div style="display:flex;gap:8px;">
+            <button onclick="fetchNEO()">🔭 Fetch NEO</button>
+            <button onclick="generateUncertaintyCone()">☄️ Generate
+              Cone</button>
+            <button onclick="simulate()">▶ Simulate Impact</button>
+          </div>
+
+          <div id="output" class="output">Run a simulation or fetch a NEO to
+            begin.</div>
+        </div>
+
+        <!-- Strategy Explorer -->
+        <div class="extra-panel">
+          <h4>Strategy Explorer</h4>
+          <div style="display:flex;gap:8px;">
+            <button onclick="deflectionMission()">🚀 Deflection Mission
+              (simulate)</button>
+            <button onclick="evacuationPlan()">🏃 Evacuation Plan</button>
+            <button onclick="compareMitigation()">🔁 Compare With/Without
+              Deflection</button>
+          </div>
+          <div id="strategyOutput" class="output"
+            style="margin-top:8px;">Strategy
+            output will appear here.</div>
+        </div>
+
+        <!-- Export -->
+        <div class="extra-panel">
+          <h4>Export Results</h4>
+          <div style="display:flex;gap:8px;">
+            <button onclick="exportPDF()">📄 Export PDF</button>
+            <button onclick="exportMap()">🖼️ Export Map PNG</button>
+            <button onclick="exportJSON()">💾 Export JSON</button>
+          </div>
+          <div style="margin-top:8px;">
+            <small class="kv"><span>Energy conv:</span><span id="energyConv"
+                style="font-weight:700">—</span></small>
           </div>
         </div>
+      </aside>
 
-        <div class="row">
-          <div class="col">
-            <label>Asteroid Diameter (m)
-              <input type="number" id="size" value="100" min="0.1" step="0.1" />
-            </label>
-          </div>
-          <div class="col">
-            <label>Density (kg/m³)
-              <input type="number" id="densityInput" value="3000" min="500"
-                step="10" />
-            </label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col">
-            <label>Velocity (km/s)
-              <input type="number" id="velocity" value="20" step="0.1" />
-            </label>
-          </div>
-          <div class="col">
-            <label>Impact Angle (°)
-              <input type="number" id="angle" value="45" step="1" />
-            </label>
-          </div>
-        </div>
-
-        <label>Population Density (/km²)
-          <input type="number" id="popDensity" value="1000" />
-        </label>
-
-        <label>Uncertainty Cone Half-Angle (°)
-          <input type="number" id="uncertaintyDeg" value="5" min="0" max="45" />
-        </label>
-
-        <label>Monte Carlo Samples
-          <input type="number" id="samples" value="200" min="10" step="10" />
-        </label>
-
-        <label>Deflection (Δv in m/s) — affects energy/impact probability
-          <input type="range" id="deflect" min="0" max="1000" value="0" />
-          <small id="deflectVal">Δv = 0 m/s</small>
-        </label>
-
-        <div style="display:flex;gap:8px;">
-          <button onclick="fetchNEO()">🔭 Fetch NEO</button>
-          <button onclick="generateUncertaintyCone()">☄️ Generate Cone</button>
-          <button onclick="simulate()">▶ Simulate Impact</button>
-        </div>
-
-        <div id="output" class="output">Run a simulation or fetch a NEO to
-          begin.</div>
-      </div>
-
-      <!-- Strategy Explorer -->
-      <div class="extra-panel">
-        <h4>Strategy Explorer</h4>
-        <div style="display:flex;gap:8px;">
-          <button onclick="deflectionMission()">🚀 Deflection Mission
-            (simulate)</button>
-          <button onclick="evacuationPlan()">🏃 Evacuation Plan</button>
-          <button onclick="compareMitigation()">🔁 Compare With/Without
-            Deflection</button>
-        </div>
-        <div id="strategyOutput" class="output" style="margin-top:8px;">Strategy
-          output will appear here.</div>
-      </div>
-
-      <!-- Export -->
-      <div class="extra-panel">
-        <h4>Export Results</h4>
-        <div style="display:flex;gap:8px;">
-          <button onclick="exportPDF()">📄 Export PDF</button>
-          <button onclick="exportMap()">🖼️ Export Map PNG</button>
-          <button onclick="exportJSON()">💾 Export JSON</button>
-        </div>
-        <div style="margin-top:8px;">
-          <small class="kv"><span>Energy conv:</span><span id="energyConv"
-              style="font-weight:700">—</span></small>
-        </div>
-      </div>
-    </aside>
-
-    <script>
+      <script>
 // ---------- Map setup ----------
 const map = L.map('map').setView([20,0],2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap contributors' }).addTo(map);
@@ -547,5 +557,5 @@ map.on('movestart', ()=>{ /* optional cleanup if needed */ });
 
 // ---------------- End ----------------
 </script>
-  </body>
-</html>
+    </body>
+  </html>
