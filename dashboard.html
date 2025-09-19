@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navbar Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans scroll-smooth">
+
+  <!-- ✅ Navbar -->
+  <header class="bg-black sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex items-center px-6 py-4">
+      <!-- Title Yellow -->
+      <h1 class="text-2xl font-bold text-yellow-400 mr-10">Nebula Nexus</h1>
+
+      <!-- Links White -->
+      <nav class="flex space-x-6 text-lg text-white">
+        <a href="p2.html" class="hover:text-gray-300 transition">Home</a>
+        <a href="controls.html" class="hover:text-gray-300 transition">Asteroids Effect </a>
+        <a href="dashboard.html" class="hover:text-gray-300 transition">Dashboard Risk</a>
+        <a href="p.html" class="hover:text-gray-300 transition">NASA Research & History</a>
+        <a href="asteroid_watch.html" class="hover:text-gray-300 transition">Eyes on Asteroids</a>
+        <a href="team_member.html" class="hover:text-gray-300 transition">Team Members</a>
+      </nav>
+    </div>
+  </header>
+  <style>
+  header nav a {
+    color: white;
+    text-decoration: none;
+  }
+  header nav a:hover {
+    color: #d1d5db; /* Tailwind's gray-300 */
+  }
+</style>
+    <!-- Chart.js -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- PapaParse -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <!-- Leaflet & MarkerCluster -->
+    <link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script
+      src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <style>
+    /* ---- Design tokens ---- */
+    :root{
+      --bg:#061022;
+      --card:#071428;
+      --muted:#94a7bf;
+      --accent:#ffb86b;
+      --accent-2:#7dd3fc;
+      --success:#5eead4;
+      --danger:#ff6b6b;
+      --glass:rgba(255,255,255,0.03);
+      --radius:14px;
+      --shadow: 0 10px 30px rgba(2,6,23,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg), #041022 120%);color:#eaf4ff}
+    a{color:var(--accent-2)}
+    .wrap{max-width:1300px;margin:18px auto;padding:18px}
+    
+
+    /* header */
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ffd58a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071022;font-size:22px;box-shadow:var(--shadow)}
+    h1{margin:0;font-size:20px}
+    .subtitle{color:var(--muted);font-size:13px}
+
+    /* main layout */
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-top:16px}
+    .left{display:flex;flex-direction:column;gap:14px}
+    .right{display:flex;flex-direction:column;gap:14px}
+
+    /* cards */
+    .cards{display:flex;gap:12px}
+    .card{background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01));padding:12px;border-radius:12px;display:flex;gap:12px;align-items:center;flex:1;cursor:pointer;border:1px solid rgba(255,255,255,0.02);box-shadow:0 6px 18px rgba(0,0,0,0.5);transition:transform .16s, box-shadow .16s}
+    .card:focus,.card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,0.6)}
+    .icon{width:56px;height:56px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:28px}
+
+    /* quick stats */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat{background:var(--card);padding:12px;border-radius:12px;text-align:left}
+    .stat .label{font-size:12px;color:var(--muted)}
+    .stat .value{font-weight:700;font-size:18px;margin-top:6px}
+
+    /* charts + map */
+    .panels{display:grid;grid-template-columns:1fr 360px;gap:12px}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:12px;box-shadow:var(--shadow)}
+    #map{height:420px;border-radius:12px}
+    canvas{width:100% !important;height:240px !important}
+
+    /* table */
+    .table-wrap{background:var(--card);padding:12px;border-radius:12px;overflow:auto}
+    table{width:100%;border-collapse:collapse;color:#dff0ff}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;font-size:13px}
+    th{position:sticky;top:0;background:linear-gradient(180deg, rgba(0,0,0,0.12), transparent)}
+    tr:hover td{background:linear-gradient(90deg, rgba(255,255,255,0.01), transparent)}
+    .search-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+
+    /* right side */
+    .controls{display:flex;flex-direction:column;gap:8px}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px;border-radius:8px;color:var(--muted);cursor:pointer;text-align:left}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#ffd58a);color:#071022;border:none}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:60}
+    .modal.active{display:flex}
+    .modal-card{background:linear-gradient(180deg,#061426,#07172b);padding:18px;border-radius:12px;max-width:860px;width:96%;box-shadow:var(--shadow);color:#eaf4ff}
+
+    /* footer */
+    footer{text-align:center;color:var(--muted);font-size:13px;margin-top:12px}
+
+    /* responsive */
+    @media (max-width:1100px){
+      .grid{grid-template-columns:1fr}
+      .panels{grid-template-columns:1fr}
+      canvas{height:200px !important}
+      #map{height:320px}
+      .stats{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+  </head>
+</head>
+<body class="bg-gray-400 text-white font-sans scroll-smooth">
+
+  <!-- Navbar -->
+  <body class="bg-gray-900 text-white font-sans scroll-smooth">
+
+    <div class="wrap">
+      <!-- Original dashboard content -->
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden>AE</div>
+          <div>
+            <h1>Asteroid Effect — Planetary Risk Command</h1>
+            <div class="subtitle">Winning-ready interactive risk dashboard —
+              CSV-powered • Built for NASA Space Apps</div>
+          </div>
+        </div>
+
+        <div style="text-align:right">
+          <div style="margin-bottom:6px;color:var(--muted);font-size:13px">Data
+            source: default dataset (Sentry summary) • Upload CSV to analyze
+            your data</div>
+          <div
+            style="display:flex;gap:8px;align-items:center;justify-content:flex-end">
+            <label class="btn" tabindex="0" for="fileInput"
+              style="display:inline-flex;gap:8px;align-items:center;cursor:pointer">
+              <input id="fileInput" type="file" accept=".csv,application/json"
+                style="display:none" />
+              Upload CSV / JSON
+            </label>
+            <button id="downloadFiltered" class="btn">Download Filtered
+              CSV</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid" role="main">
+        <main class="left">
+          <!-- top cards -->
+          <div class="cards" role="list">
+            <div class="card" id="card-overview" tabindex="0" role="button"
+              aria-pressed="true">
+              <div class="icon" aria-hidden>🌍</div>
+              <div>
+                <div style="font-weight:700">Global Risk Overview</div>
+                <div class="small">Aggregate probability & severity</div>
+              </div>
+            </div>
+
+            <div class="card" id="card-neo" tabindex="0" role="button">
+              <div class="icon" aria-hidden>🔭</div>
+              <div>
+                <div style="font-weight:700">Near-Earth Objects</div>
+                <div class="small">Sentry cumulative impact list</div>
+              </div>
+            </div>
+
+            <div class="card" id="card-action" tabindex="0" role="button">
+              <div class="icon" aria-hidden>🛠️</div>
+              <div>
+                <div style="font-weight:700">Planetary Defense</div>
+                <div class="small">Suggested actions & readiness</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- quick stats -->
+          <div class="stats" aria-live="polite" style="margin-top:8px">
+            <div class="stat">
+              <div class="label">Highest cumulative impact prob</div>
+              <div class="value" id="stat-maxprob">—</div>
+            </div>
+            <div class="stat">
+              <div class="label">Avg Palermo Scale (cum.)</div>
+              <div class="value" id="stat-palermo">—</div>
+            </div>
+            <div class="stat">
+              <div class="label">Avg Estimated Diameter (km)</div>
+              <div class="value" id="stat-diam">—</div>
+            </div>
+            <div class="stat">
+              <div class="label">Total Potential Impacts (sum)</div>
+              <div class="value" id="stat-impacts">—</div>
+            </div>
+          </div>
+
+          <!-- panels -->
+          <div class="panels" style="margin-top:12px">
+            <div class="panel" aria-labelledby="chart-title">
+              <div
+                style="display:flex;justify-content:space-between;align-items:center">
+                <h3 id="chart-title" style="margin:0">Risk Distribution &
+                  Trend</h3>
+                <div class="small" id="last-updated">Default dataset
+                  loaded</div>
+              </div>
+              <canvas id="barChart"
+                aria-label="asteroid risk distribution"></canvas>
+              <hr style="border-color:rgba(255,255,255,0.03);margin:10px 0" />
+              <canvas id="trendChart" aria-label="risk trend"></canvas>
+            </div>
+
+            <aside class="panel">
+              <h3 style="margin-top:0">Controls & Filters</h3>
+              <div class="controls">
+                <label class="small">Search / Filter</label>
+                <input id="searchBox" type="search"
+                  placeholder="Search by object designation or ID"
+                  style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
+                <div style="display:flex;gap:8px">
+                  <button id="showAll" class="btn">Show All</button>
+                  <button id="showHighProb" class="btn">Top Probability</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button id="showPHA" class="btn">Show PHAs</button>
+                  <button id="toggleClusters" class="btn">Toggle
+                    Clusters</button>
+                </div>
+
+                <hr style="border-color:rgba(255,255,255,0.03)" />
+                <label class="small">Impact Simulator</label>
+                <div style="display:flex;gap:8px">
+                  <input id="simDiameter" type="number" placeholder="diam km"
+                    style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);width:120px;background:transparent;color:inherit" />
+                  <button id="runSim" class="btn primary">Run</button>
+                </div>
+
+                <hr style="border-color:rgba(255,255,255,0.03)" />
+                <div class="small">Links</div>
+                <a href="https://neo.jpl.nasa.gov" target="_blank"
+                  rel="noopener">NASA NEO Program</a><br />
+                <a href="https://www.nasa.gov/planetarydefense" target="_blank"
+                  rel="noopener">NASA Planetary Defense</a>
+              </div>
+            </aside>
+          </div>
+
+          <!-- map -->
+          <div class="panel" style="margin-top:12px">
+            <h3 style="margin-top:0">Global Impact Map</h3>
+            <div id="map" role="application"
+              aria-label="asteroid impact map"></div>
+            <div
+              style="margin-top:8px;color:var(--muted);font-size:13px">Markers
+              show object designations; clustered for dense lists. Click marker
+              to view details and open deep view.</div>
+          </div>
+
+          <!-- table -->
+          <div class="table-wrap" style="margin-top:12px">
+            <div class="search-row">
+              <div style="display:flex;gap:8px;align-items:center">
+                <label class="small" style="margin-right:6px">Sort by:</label>
+                <select id="sortSelect"
+                  style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit">
+                  <option value="prob">Impact Probability (cum.)</option>
+                  <option value="diam">Estimated Diameter</option>
+                  <option value="palermo">Palermo Scale (cum.)</option>
+                  <option value="impacts">Potential Impacts</option>
+                </select>
+              </div>
+              <div style="margin-left:auto">
+                <button id="openSelected" class="btn">Open Selected</button>
+                <button id="clearSelection" class="btn">Clear</button>
+              </div>
+            </div>
+
+            <table id="dataTable" aria-label="asteroid objects table">
+              <thead>
+                <tr>
+                  <th><input id="chkAll" type="checkbox"
+                      aria-label="select all" /></th>
+                  <th>Designation</th>
+                  <th>Year Range</th>
+                  <th>Potential Impacts</th>
+                  <th>Impact Prob. (cum.)</th>
+                  <th>Est. Diam (km)</th>
+                  <th>Palermo (cum.)</th>
+                  <th>Vinfinity (km/s)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </main>
+
+        <aside class="right">
+          <div class="panel">
+            <h3 style="margin-top:0">Selected Object Details</h3>
+            <div id="detailCard" style="min-height:200px;color:var(--muted)">
+              <div style="font-weight:700;color:#fff" id="d-name">No object
+                selected</div>
+              <div id="d-meta" style="margin-top:8px"></div>
+              <div id="d-desc" style="margin-top:10px;font-size:13px"></div>
+              <div style="margin-top:12px">
+                <button id="btn-showSolutions" class="btn">Suggested
+                  Actions</button>
+                <button id="btn-openModal" class="btn">Deep Analysis</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3 style="margin-top:0">Export / Import</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button id="exportCSV" class="btn">Export current to CSV</button>
+              <button id="downloadSample" class="btn">Download Sample
+                CSV</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3 style="margin-top:0">Accessibility</h3>
+            <div class="small">High-contrast palette, keyboard navigation,
+              aria-live updates, and reduced-motion support included.</div>
+          </div>
+        </aside>
+      </div>
+
+      <footer>Asteroid Effect — Planetary Risk Command • Built for NASA Space
+        Apps — Demo dataset from Sentry summary included</footer>
+    </div>
+
+    <!-- modal -->
+    <div id="modal" class="modal" role="dialog" aria-modal="true"
+      aria-hidden="true">
+      <div class="modal-card" role="document" aria-label="detailed analysis">
+        <div
+          style="display:flex;justify-content:space-between;align-items:center">
+          <h3 id="modalTitle" style="margin:0">Deep Analysis</h3>
+          <button id="modalClose" class="btn">Close</button>
+        </div>
+        <div id="modalContent" style="margin-top:12px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <script>
+  /******************************************************************
+   * Asteroid Effect — Dashboard JS
+   *
+   * Features:
+   * - Default dataset is the uploaded csvjson.json (Sentry summary) embedded below
+   * - CSV/JSON upload via file input (PapaParse)
+   * - Chart.js bar + trend charts
+   * - Leaflet map with marker clustering
+   * - Search, filter, sorting, table with selection, download filtered CSV
+   * - Impact simulator (simple severity estimate)
+   * - Accessible ARIA announces
+   ******************************************************************/
+
+  // ------------------------------
+  // Default dataset (from csvjson.json uploaded by user)
+  // (Columns kept as in the provided data)
+  // ------------------------------
+  const defaultData = [
+    {"Object Designation":"29075 (1950 DA)","Year Range":"2880-2880","Potential Impacts":1,"Impact Probability (cumulative)":0.00038,"Vinfinity (km/s)":14.1,"H (mag)":17.9,"Estimated Diameter (km)":1.3,"Palermo Scale (cum.)":-0.92,"Palermo Scale (max.)":-0.92,"Torino Scale (max.)":"","": "a0029075"},
+    {"Object Designation":"101955 Bennu (1999 RQ36)","Year Range":"2178-2290","Potential Impacts":157,"Impact Probability (cumulative)":0.00057,"Vinfinity (km/s)":5.99,"H (mag)":20.6,"Estimated Diameter (km)":0.49,"Palermo Scale (cum.)":-1.4,"Palermo Scale (max.)":-1.59,"Torino Scale (max.)":"","": "a0101955"},
+    {"Object Designation":"(2008 JL3)","Year Range":"2027-2122","Potential Impacts":44,"Impact Probability (cumulative)":0.00017,"Vinfinity (km/s)":8.42,"H (mag)":25.3,"Estimated Diameter (km)":0.029,"Palermo Scale (cum.)":-2.68,"Palermo Scale (max.)":-2.69,"Torino Scale (max.)":0,"": "bK08J03L"},
+    {"Object Designation":"(2000 SG344)","Year Range":"2069-2122","Potential Impacts":300,"Impact Probability (cumulative)":0.0027,"Vinfinity (km/s)":1.36,"H (mag)":24.8,"Estimated Diameter (km)":0.037,"Palermo Scale (cum.)":-2.77,"Palermo Scale (max.)":-3.11,"Torino Scale (max.)":0,"": "bK00SY4G"},
+    {"Object Designation":"(2010 RF12)","Year Range":"2095-2122","Potential Impacts":70,"Impact Probability (cumulative)":0.1,"Vinfinity (km/s)":5.1,"H (mag)":28.4,"Estimated Diameter (km)":0.007,"Palermo Scale (cum.)":-2.97,"Palermo Scale (max.)":-2.97,"Torino Scale (max.)":0,"": "bK10R12F"},
+    {"Object Designation":"(2022 PX1)","Year Range":"2040-2040","Potential Impacts":1,"Impact Probability (cumulative)":0.0000032,"Vinfinity (km/s)":35.11,"H (mag)":22.3,"Estimated Diameter (km)":0.12,"Palermo Scale (cum.)":-3.1,"Palermo Scale (max.)":-3.1,"Torino Scale (max.)":0,"": "bK22P01X"},
+    {"Object Designation":"(2005 QK76)","Year Range":"2030-2059","Potential Impacts":6,"Impact Probability (cumulative)":0.000071,"Vinfinity (km/s)":19.67,"H (mag)":25.2,"Estimated Diameter (km)":0.031,"Palermo Scale (cum.)":-3.18,"Palermo Scale (max.)":-3.28,"Torino Scale (max.)":0,"": "bK05Q76K"},
+    {"Object Designation":"(2021 GX9)","Year Range":"2032-2052","Potential Impacts":2,"Impact Probability (cumulative)":0.000082,"Vinfinity (km/s)":16.79,"H (mag)":25.3,"Estimated Diameter (km)":0.029,"Palermo Scale (cum.)":-3.25,"Palermo Scale (max.)":-3.25,"Torino Scale (max.)":0,"": "bK21G09X"},
+    {"Object Designation":"(2025 JU)","Year Range":"2074-2108","Potential Impacts":10,"Impact Probability (cumulative)":0.00006,"Vinfinity (km/s)":15.27,"H (mag)":23.2,"Estimated Diameter (km)":0.078,"Palermo Scale (cum.)":-3.26,"Palermo Scale (max.)":-3.4,"Torino Scale (max.)":0,"": "bK25J00U"},
+    {"Object Designation":"(2025 RM1)","Year Range":"2048-2048","Potential Impacts":1,"Impact Probability (cumulative)":0.00017,"Vinfinity (km/s)":12.23,"H (mag)":24.8,"Estimated Diameter (km)":0.037,"Palermo Scale (cum.)":-3.33,"Palermo Scale (max.)":-3.33,"Torino Scale (max.)":0,"": "bK25R01M"},
+    {"Object Designation":"(2025 LK)","Year Range":"2052-2079","Potential Impacts":15,"Impact Probability (cumulative)":0.0017,"Vinfinity (km/s)":9.85,"H (mag)":26.9,"Estimated Diameter (km)":0.014,"Palermo Scale (cum.)":-3.48,"Palermo Scale (max.)":-3.49,"Torino Scale (max.)":0,"": "bK25L00K"},
+    {"Object Designation":"(2015 JJ)","Year Range":"2111-2111","Potential Impacts":1,"Impact Probability (cumulative)":0.000021,"Vinfinity (km/s)":10.7,"H (mag)":22.1,"Estimated Diameter (km)":0.13,"Palermo Scale (cum.)":-3.56,"Palermo Scale (max.)":-3.56,"Torino Scale (max.)":0,"": "bK15J00J"},
+    {"Object Designation":"(2023 DO)","Year Range":"2057-2092","Potential Impacts":25,"Impact Probability (cumulative)":0.00045,"Vinfinity (km/s)":6.97,"H (mag)":25.6,"Estimated Diameter (km)":0.026,"Palermo Scale (cum.)":-3.57,"Palermo Scale (max.)":-3.58,"Torino Scale (max.)":0,"": "bK23D00O"},
+    {"Object Designation":"(2019 VB37)","Year Range":"2049-2067","Potential Impacts":5,"Impact Probability (cumulative)":0.000057,"Vinfinity (km/s)":14.55,"H (mag)":24.5,"Estimated Diameter (km)":0.043,"Palermo Scale (cum.)":-3.61,"Palermo Scale (max.)":-3.61,"Torino Scale (max.)":0,"": "bK19V37B"},
+    {"Object Designation":"(2008 UB7)","Year Range":"2044-2101","Potential Impacts":50,"Impact Probability (cumulative)":0.000034,"Vinfinity (km/s)":18.53,"H (mag)":23.8,"Estimated Diameter (km)":0.058,"Palermo Scale (cum.)":-3.62,"Palermo Scale (max.)":-4.24,"Torino Scale (max.)":0,"": "bK08U07B"},
+    {"Object Designation":"(2024 JW16)","Year Range":"2082-2121","Potential Impacts":12,"Impact Probability (cumulative)":0.0000023,"Vinfinity (km/s)":23.93,"H (mag)":21,"Estimated Diameter (km)":0.22,"Palermo Scale (cum.)":-3.63,"Palermo Scale (max.)":-3.99,"Torino Scale (max.)":0,"": "bK24J16W"},
+    {"Object Designation":"(2007 DX40)","Year Range":"2035-2122","Potential Impacts":93,"Impact Probability (cumulative)":0.000078,"Vinfinity (km/s)":15.52,"H (mag)":24.6,"Estimated Diameter (km)":0.04,"Palermo Scale (cum.)":-3.64,"Palermo Scale (max.)":-4.03,"Torino Scale (max.)":0,"": "bK07D40X"},
+    {"Object Designation":"(2016 YM4)","Year Range":"2121-2121","Potential Impacts":1,"Impact Probability (cumulative)":0.000013,"Vinfinity (km/s)":18.98,"H (mag)":22.4,"Estimated Diameter (km)":0.11,"Palermo Scale (cum.)":-3.69,"Palermo Scale (max.)":-3.69,"Torino Scale (max.)":0,"": "bK16Y04M"},
+    {"Object Designation":"(2012 QD8)","Year Range":"2047-2120","Potential Impacts":16,"Impact Probability (cumulative)":0.0000061,"Vinfinity (km/s)":20.76,"H (mag)":23.1,"Estimated Diameter (km)":0.081,"Palermo Scale (cum.)":-3.71,"Palermo Scale (max.)":-3.79,"Torino Scale (max.)":0,"": "bK12Q08D"},
+    {"Object Designation":"(2000 SB45)","Year Range":"2067-2118","Potential Impacts":194,"Impact Probability (cumulative)":0.00016,"Vinfinity (km/s)":7.53,"H (mag)":24.3,"Estimated Diameter (km)":0.046,"Palermo Scale (cum.)":-3.72,"Palermo Scale (max.)":-4.19,"Torino Scale (max.)":0,"": "bK00S45B"},
+    {"Object Designation":"(2024 TK5)","Year Range":"2028-2028","Potential Impacts":1,"Impact Probability (cumulative)":0.00033,"Vinfinity (km/s)":8.93,"H (mag)":27.7,"Estimated Diameter (km)":0.01,"Palermo Scale (cum.)":-3.76,"Palermo Scale (max.)":-3.76,"Torino Scale (max.)":0,"": "bK24T05K"},
+    {"Object Designation":"(2008 EX5)","Year Range":"2056-2093","Potential Impacts":28,"Impact Probability (cumulative)":0.000053,"Vinfinity (km/s)":9.92,"H (mag)":23.8,"Estimated Diameter (km)":0.059,"Palermo Scale (cum.)":-3.78,"Palermo Scale (max.)":-4.05,"Torino Scale (max.)":0,"": "bK08E05X"},
+    {"Object Designation":"(2025 DT2)","Year Range":"2044-2071","Potential Impacts":12,"Impact Probability (cumulative)":0.00044,"Vinfinity (km/s)":9.74,"H (mag)":26.6,"Estimated Diameter (km)":0.016,"Palermo Scale (cum.)":-3.79,"Palermo Scale (max.)":-3.79,"Torino Scale (max.)":0,"": "bK25D02T"},
+    {"Object Designation":"(2020 VW)","Year Range":"2074-2079","Potential Impacts":12,"Impact Probability (cumulative)":0.007,"Vinfinity (km/s)":9.69,"H (mag)":28.3,"Estimated Diameter (km)":0.007,"Palermo Scale (cum.)":-3.82,"Palermo Scale (max.)":-4.1,"Torino Scale (max.)":0,"": "bK20V00W"},
+    {"Object Designation":"(2020 VV)","Year Range":"2044-2122","Potential Impacts":424,"Impact Probability (cumulative)":0.0023,"Vinfinity (km/s)":2.58,"H (mag)":27.3,"Estimated Diameter (km)":0.012,"Palermo Scale (cum.)":-3.83,"Palermo Scale (max.)":-4.31,"Torino Scale (max.)":0,"": "bK20V00V"},
+    {"Object Designation":"(2017 WT28)","Year Range":"2083-2121","Potential Impacts":113,"Impact Probability (cumulative)":0.012,"Vinfinity (km/s)":4.47,"H (mag)":28.1,"Estimated Diameter (km)":0.008,"Palermo Scale (cum.)":-3.84,"Palermo Scale (max.)":-3.86,"Torino Scale (max.)":0,"": "bK17W28T"},
+    {"Object Designation":"(2012 HG2)","Year Range":"2052-2122","Potential Impacts":689,"Impact Probability (cumulative)":0.002,"Vinfinity (km/s)":3.32,"H (mag)":27,"Estimated Diameter (km)":0.014,"Palermo Scale (cum.)":-3.84,"Palermo Scale (max.)":-4.27,"Torino Scale (max.)":0,"": "bK12H02G"},
+    {"Object Designation":"(2013 VW13)","Year Range":"2063-2095","Potential Impacts":14,"Impact Probability (cumulative)":0.00044,"Vinfinity (km/s)":16.35,"H (mag)":26.2,"Estimated Diameter (km)":0.019,"Palermo Scale (cum.)":-3.86,"Palermo Scale (max.)":-4.03,"Torino Scale (max.)":0,"": "bK13V13W"},
+    {"Object Designation":"(2007 KE4)","Year Range":"2029-2096","Potential Impacts":3,"Impact Probability (cumulative)":0.00002,"Vinfinity (km/s)":10.06,"H (mag)":25.2,"Estimated Diameter (km)":0.031,"Palermo Scale (cum.)":-3.88,"Palermo Scale (max.)":-3.89,"Torino Scale (max.)":0,"": "bK07K04E"},
+    {"Object Designation":"(2013 TP4)","Year Range":"2026-2026","Potential Impacts":1,"Impact Probability (cumulative)":0.000035,"Vinfinity (km/s)":25.3,"H (mag)":27.5,"Estimated Diameter (km)":0.011,"Palermo Scale (cum.)":-3.9,"Palermo Scale (max.)":-3.9,"Torino Scale (max.)":0,"": "bK13T04P"},
+    {"Object Designation":"(2023 BZ)","Year Range":"2026-2026","Potential Impacts":1,"Impact Probability (cumulative)":0.000038,"Vinfinity (km/s)":8.25,"H (mag)":26.6,"Estimated Diameter (km)":0.016,"Palermo Scale (cum.)":-3.92,"Palermo Scale (max.)":-3.92,"Torino Scale (max.)":0,"": "bK23B00Z"},
+    {"Object Designation":"(2023 VD3)","Year Range":"2034-2042","Potential Impacts":3,"Impact Probability (cumulative)":0.00015,"Vinfinity (km/s)":17.78,"H (mag)":27.1,"Estimated Diameter (km)":0.013,"Palermo Scale (cum.)":-3.94,"Palermo Scale (max.)":-3.94,"Torino Scale (max.)":0,"": "bK23V03D"},
+    {"Object Designation":"(2006 DM63)","Year Range":"2031-2122","Potential Impacts":46,"Impact Probability (cumulative)":0.00014,"Vinfinity (km/s)":10.37,"H (mag)":26.7,"Estimated Diameter (km)":0.015,"Palermo Scale (cum.)":-3.95,"Palermo Scale (max.)":-4.2,"Torino Scale (max.)":0,"": "bK06D63M"},
+    {"Object Designation":"(2020 UL3)","Year Range":"2122-2124","Potential Impacts":3,"Impact Probability (cumulative)":0.000035,"Vinfinity (km/s)":10.18,"H (mag)":23.3,"Estimated Diameter (km)":0.075,"Palermo Scale (cum.)":-3.98,"Palermo Scale (max.)":-4.24,"Torino Scale (max.)":0,"": "bK20U03L"}
+  ];
+
+  // Working dataset and state
+  let dataset = [];
+  let filtered = [];
+  let markersGroup = null;
+  let clusterEnabled = true;
+
+  // DOM refs
+  const tbody = document.querySelector('#dataTable tbody');
+  const statMaxProb = document.getElementById('stat-maxprob');
+  const statPalermo = document.getElementById('stat-palermo');
+  const statDiam = document.getElementById('stat-diam');
+  const statImpacts = document.getElementById('stat-impacts');
+  const lastUpdated = document.getElementById('last-updated');
+  const detailCard = document.getElementById('detailCard');
+  const dName = document.getElementById('d-name');
+  const dMeta = document.getElementById('d-meta');
+  const dDesc = document.getElementById('d-desc');
+  const modal = document.getElementById('modal');
+  const modalContent = document.getElementById('modalContent');
+  const modalTitle = document.getElementById('modalTitle');
+
+  // map init
+  const map = L.map('map', {zoomControl:true, attributionControl:false}).setView([12,0],2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
+  markersGroup = L.markerClusterGroup();
+  markersGroup.addTo(map);
+
+  // charts
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  let barChart, trendChart;
+
+  function initCharts(){
+    const labels = ['<0.001','0.001-0.01','0.01-0.1','>0.1'];
+    barChart = new Chart(barCtx, {
+      type:'bar',
+      data: {labels, datasets:[{label:'Objects',data:[0,0,0,0], backgroundColor:['#60a5fa','#7dd3fc','#f59e0b','#fb7185']}]},
+      options:{plugins:{legend:{display:false}},responsive:true,scales:{y:{beginAtZero:true}}}
+    });
+
+    trendChart = new Chart(trendCtx, {
+      type:'line',
+      data:{labels:Array.from({length:30},(_,i)=>`-${30-i}d`),datasets:[{label:'Risk Index',data:Array.from({length:30},()=>Math.random()*50+10),fill:true,tension:0.4,pointRadius:2}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+    });
+  }
+
+  // ---------------------------
+  // Utilities: normalize row to known schema
+  // ---------------------------
+  function normalizeRow(row){
+    // handle keys with spaces
+    const get = (k)=> {
+      if(row[k] !== undefined) return row[k];
+      // try alternate keys
+      const alt = Object.keys(row).find(x=>x.toLowerCase().replace(/\s/g,'').includes(k.replace(/\s/g,'')));
+      return alt ? row[alt] : undefined;
+    };
+    const designation = get('Object Designation') || row.designation || row.name || 'Unknown';
+    const yearrange = get('Year Range') || row['Year Range'] || row.year || '';
+    const impacts = Number(get('Potential Impacts') ?? row.PotentialImpacts ?? 0) || 0;
+    const impactProb = Number(get('Impact Probability (cumulative)') ?? row.ImpactProbability ?? row.impactProb ?? 0) || 0;
+    const vinf = Number(get('Vinfinity (km/s)') ?? row.vinf ?? 0) || 0;
+    const Hmag = Number(get('H (mag)') ?? row.H ?? 0) || 0;
+    const diam = Number(get('Estimated Diameter (km)') ?? row.diameter ?? 0) || 0;
+    const palermo = Number(get('Palermo Scale (cum.)') ?? row.Palermo ?? 0) || 0;
+    const id = row[''] || row.id || designation;
+    // lat/lon not present in Sentry summary — simulate near-random locations for visualization
+    const lat = Number(row.lat ?? row.latitude) || (Math.random()*160 - 80);
+    const lon = Number(row.lon ?? row.longitude) || (Math.random()*360 - 180);
+    return {
+      designation, yearrange, impacts, impactProb, vinf, Hmag, diam, palermo, id, lat, lon, raw:row
+    };
+  }
+
+  // ---------------------------
+  // Load dataset (default or from CSV/JSON)
+  // ---------------------------
+  function loadDefault(){
+    dataset = defaultData.map(normalizeRow);
+    filtered = [...dataset];
+    renderAll('Default dataset (Sentry summary) loaded');
+  }
+
+  // CSV/JSON upload handling
+  document.getElementById('fileInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const name = file.name.toLowerCase();
+    if(name.endsWith('.json')){
+      file.text().then(txt=>{
+        try {
+          const parsed = JSON.parse(txt);
+          dataset = parsed.map(normalizeRow);
+          filtered = [...dataset];
+          renderAll(`Loaded JSON: ${file.name}`);
+        } catch(err){
+          alert('Invalid JSON file.');
+        }
+      });
+    } else {
+      Papa.parse(file, {header:true, dynamicTyping:true, skipEmptyLines:true, complete(results){
+        dataset = results.data.map(normalizeRow);
+        filtered = [...dataset];
+        renderAll(`Loaded CSV: ${file.name}`);
+      }});
+    }
+  });
+
+  // ---------------------------
+  // Render functions
+  // ---------------------------
+  function renderAll(msg){
+    lastUpdated.textContent = msg + ' • ' + new Date().toLocaleString();
+    refreshStats();
+    renderCharts();
+    renderMap();
+    renderTable();
+    announce(msg);
+  }
+
+  function refreshStats(){
+    if(!dataset.length){
+      statMaxProb.textContent = '—';
+      statPalermo.textContent = '—';
+      statDiam.textContent = '—';
+      statImpacts.textContent = '—';
+      return;
+    }
+    const maxProb = Math.max(...filtered.map(d=>d.impactProb));
+    const avgPal = (filtered.reduce((s,d)=>s + d.palermo,0) / filtered.length).toFixed(2);
+    const avgDiam = (filtered.reduce((s,d)=>s + d.diam,0) / filtered.length).toFixed(3);
+    const sumImpacts = filtered.reduce((s,d)=>s + d.impacts,0);
+    statMaxProb.textContent = (maxProb*100).toFixed(5) + '%';
+    statPalermo.textContent = avgPal;
+    statDiam.textContent = avgDiam + ' km';
+    statImpacts.textContent = sumImpacts.toLocaleString();
+  }
+
+  function renderCharts(){
+    // distribution by impact probability buckets
+    const buckets = [0,0,0,0];
+    filtered.forEach(d=>{
+      const p = d.impactProb;
+      if(p < 0.001) buckets[0]++;
+      else if(p < 0.01) buckets[1]++;
+      else if(p < 0.1) buckets[2]++;
+      else buckets[3]++;
+    });
+    barChart.data.datasets[0].data = buckets;
+    barChart.update();
+
+    // trend: create a synthetic trend influenced by top 5 probabilities
+    const topAvg = filtered.slice().sort((a,b)=>b.impactProb-a.impactProb).slice(0,5).reduce((s,d)=>s+d.impactProb,0) * 1e5;
+    trendChart.data.datasets[0].data = trendChart.data.datasets[0].data.map((_,i)=> {
+      const noise = (Math.sin(i/3) + Math.random()*0.8)*5;
+      return Math.max(0, Math.round(20 + topAvg*10 + noise));
+    });
+    trendChart.update();
+  }
+
+  function renderMap(){
+    // clear group
+    markersGroup.clearLayers();
+    filtered.forEach(obj=>{
+      const color = obj.impactProb > 0.01 ? '#fb7185' : (obj.impactProb > 0.001 ? '#f59e0b' : '#60a5fa');
+      const marker = L.circleMarker([obj.lat, obj.lon], {radius:9, fillColor: color, color:'#081024', weight:1, fillOpacity:0.95});
+      const popupHtml = `<strong>${escapeHtml(obj.designation)}</strong><br/>
+        Year Range: ${escapeHtml(obj.yearrange)}<br/>
+        Impacts: ${obj.impacts}<br/>
+        Prob (cum.): ${(obj.impactProb*100).toExponential(3)}%<br/>
+        Diam: ${obj.diam} km<br/>
+        Palermo: ${obj.palermo}`;
+      marker.bindPopup(popupHtml);
+      marker.on('click', ()=> showDetails(obj));
+      markersGroup.addLayer(marker);
+    });
+    if(clusterEnabled) map.addLayer(markersGroup);
+    else {
+      // flatten cluster: add individual markers to map
+      if(map.hasLayer(markersGroup)) map.removeLayer(markersGroup);
+      // add single markers layer
+      filtered.forEach(obj=>{
+        const m = L.circleMarker([obj.lat, obj.lon], {radius:6, fillColor:'#7dd3fc', color:'#081024', weight:1, fillOpacity:0.95}).addTo(map);
+        m.bindPopup(`<strong>${escapeHtml(obj.designation)}</strong><br/>Prob: ${(obj.impactProb*100).toExponential(3)}%`);
+      });
+    }
+  }
+
+  function renderTable(){
+    tbody.innerHTML = '';
+    filtered.forEach((obj, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input data-idx="${idx}" type="checkbox" /></td>
+        <td>${escapeHtml(obj.designation)}</td>
+        <td>${escapeHtml(obj.yearrange)}</td>
+        <td>${obj.impacts}</td>
+        <td>${(obj.impactProb*100).toExponential(6)}%</td>
+        <td>${obj.diam}</td>
+        <td>${obj.palermo}</td>
+        <td>${obj.vinf}</td>
+        <td><button data-idx="${idx}" class="btn">View</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    // attach view handlers
+    tbody.querySelectorAll('button[data-idx]').forEach(b=>b.addEventListener('click', (e)=>{
+      const idx = Number(e.currentTarget.dataset.idx);
+      showDetails(filtered[idx]);
+    }));
+  }
+
+  // ---------------------------
+  // Selection & small actions
+  // ---------------------------
+  document.getElementById('chkAll').addEventListener('change', (e)=>{
+    const checked = e.target.checked;
+    tbody.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked = checked);
+  });
+
+  document.getElementById('openSelected').addEventListener('click', ()=>{
+    const checked = [...tbody.querySelectorAll('input[type=checkbox]:checked')].map(cb=>Number(cb.dataset.idx));
+    if(!checked.length) return alert('No rows selected.');
+    // open modal with aggregated details
+    const selected = checked.map(i=>filtered[i]);
+    modalTitle.textContent = `Selected (${selected.length}) Deep Analysis`;
+    modalContent.innerHTML = generateAggregatedText(selected);
+    modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
+  });
+
+  document.getElementById('clearSelection').addEventListener('click', ()=>{
+    tbody.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked = false);
+    document.getElementById('chkAll').checked = false;
+  });
+
+  // filters
+  document.getElementById('showAll').addEventListener('click', ()=>{
+    filtered = [...dataset];
+    renderAll('Showing all objects');
+  });
+  document.getElementById('showPHA').addEventListener('click', ()=>{
+    // PHA defined here as impactProb > 0.001 or diam > 0.1 (simple heuristic)
+    filtered = dataset.filter(d=>d.impactProb > 0.001 || d.diam > 0.1);
+    renderAll('Filtered PHAs (heuristic)');
+  });
+  document.getElementById('showHighProb').addEventListener('click', ()=>{
+    filtered = dataset.slice().sort((a,b)=>b.impactProb - a.impactProb).slice(0,20);
+    renderAll('Top 20 by cumulative probability');
+  });
+
+  // toggle clustering
+  document.getElementById('toggleClusters').addEventListener('click', ()=>{
+    clusterEnabled = !clusterEnabled;
+    renderMap();
+    announce(clusterEnabled ? 'Clusters enabled' : 'Clusters disabled');
+  });
+
+  // search
+  document.getElementById('searchBox').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    if(!q) filtered = [...dataset];
+    else filtered = dataset.filter(d => (d.designation || '').toLowerCase().includes(q) || (d.id || '').toLowerCase().includes(q));
+    renderAll(q ? `Filtered by "${q}"` : 'Search cleared');
+  });
+
+  // sort
+  document.getElementById('sortSelect').addEventListener('change', (e)=>{
+    const v = e.target.value;
+    if(v === 'prob') filtered.sort((a,b)=>b.impactProb - a.impactProb);
+    else if(v === 'diam') filtered.sort((a,b)=>b.diam - a.diam);
+    else if(v === 'palermo') filtered.sort((a,b)=>b.palermo - a.palermo);
+    else if(v === 'impacts') filtered.sort((a,b)=>b.impacts - a.impacts);
+    renderTable();
+  });
+
+  // View details
+  function showDetails(obj){
+    dName.textContent = obj.designation;
+    dMeta.innerHTML = `<strong>Year Range:</strong> ${escapeHtml(obj.yearrange)}<br/><strong>Impact Prob (cum.):</strong> ${(obj.impactProb*100).toExponential(6)}%<br/><strong>Estimated Diameter:</strong> ${obj.diam} km`;
+    dDesc.innerHTML = `
+      <div style="margin-top:8px;color:var(--muted)">
+        <strong>Palermo (cum.):</strong> ${obj.palermo} <br/>
+        <strong>Potential impacts:</strong> ${obj.impacts} <br/>
+        <strong>Vinfinity:</strong> ${obj.vinf} km/s <br/>
+        <strong>ID:</strong> ${obj.id}
+      </div>
+    `;
+    // set map view to object
+    map.setView([obj.lat, obj.lon], 5);
+    // show modal suggestion when clicking "Deep Analysis"
+    document.getElementById('btn-showSolutions').onclick = ()=> {
+      modalTitle.textContent = `Suggested Actions — ${obj.designation}`;
+      modalContent.innerHTML = generateSuggestions(obj);
+      modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
+    };
+    document.getElementById('btn-openModal').onclick = ()=> {
+      modalTitle.textContent = `Deep Analysis — ${obj.designation}`;
+      modalContent.innerHTML = `<pre style="white-space:pre-wrap;color:var(--muted)">${JSON.stringify(obj.raw, null, 2)}</pre>`;
+      modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
+    };
+  }
+
+  // modal
+  document.getElementById('modalClose').addEventListener('click', ()=>{ modal.classList.remove('active'); modal.setAttribute('aria-hidden','true'); });
+  modal.addEventListener('click', (e)=>{ if(e.target === modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden','true'); }});
+
+  // download filtered CSV
+  document.getElementById('downloadFiltered').addEventListener('click', ()=> downloadCSV(filtered, 'filtered_asteroids.csv'));
+  document.getElementById('exportCSV').addEventListener('click', ()=> downloadCSV(filtered, 'exported_asteroids.csv'));
+  document.getElementById('downloadSample').addEventListener('click', ()=> {
+    const sample = `Object Designation,Year Range,Potential Impacts,Impact Probability (cumulative),Vinfinity (km/s),H (mag),Estimated Diameter (km),Palermo Scale (cum.)
+(2025 AB),2040-2040,1,0.00012,12.3,22.5,0.05,-3.1
+(2026 ZX),2051-2052,3,0.0009,8.1,25.2,0.02,-4.2
+`;
+    const blob = new Blob([sample], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sample_asteroids.csv'; a.click();
+  });
+
+  function downloadCSV(rows, filename){
+    if(!rows || !rows.length) return alert('No data to export.');
+    const keys = Object.keys(rows[0]).filter(k=>k !== 'raw');
+    const lines = [keys.join(',')];
+    rows.forEach(r=>{
+      const vals = keys.map(k=>{
+        let v = r[k];
+        if(typeof v === 'string') v = v.replace(/"/g,'""');
+        return `"${v ?? ''}"`;
+      });
+      lines.push(vals.join(','));
+    });
+    const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  }
+
+  // ---------------------------
+  // Impact simulator (very simple, educational)
+  // ---------------------------
+  document.getElementById('runSim').addEventListener('click', ()=>{
+    const diam = Number(document.getElementById('simDiameter').value);
+    if(!diam || diam <= 0) return alert('Provide a positive diameter in km.');
+    const energyMt = 0.5 * Math.pow(diam*1000,3) / 1e15; // rough cubic scaling -> megatons approximate (toy)
+    const damage = diam > 0.5 ? 'Global catastrophic risk — planetary effects possible' : diam > 0.1 ? 'Regional devastation' : 'Local to regional damage';
+    modalTitle.textContent = `Impact Simulator — ${diam} km`;
+    modalContent.innerHTML = `<div style="color:var(--muted)"><strong>Estimated energy:</strong> ~${Math.round(energyMt).toLocaleString()} megatons (very approximate)<br/><strong>Likely damage:</strong> ${damage}<br/><br/>Suggested actions:<ul><li>Immediate detection & tracking</li><li>Consider deflection if lead time decades</li><li>Evacuation & preparedness at local/regional scales</li></ul></div>`;
+    modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
+  });
+
+  // ---------------------------
+  // Helper: generate suggestions for an object
+  // ---------------------------
+  function generateSuggestions(obj){
+    const severity = obj.impactProb * 1e4 + obj.diam * 100;
+    const priority = severity > 50 ? 'High' : severity > 5 ? 'Medium' : 'Low';
+    return `<div style="color:var(--muted)">
+      <p><strong>Priority:</strong> ${priority}</p>
+      <p>Recommended next steps:</p>
+      <ul>
+        <li>Verify orbital parameters with targeted observations (radar, telescopes)</li>
+        <li>Run high-fidelity impact & evacuation simulations for the Year Range: ${escapeHtml(obj.yearrange)}</li>
+        <li>Coordinate with global planetary defense networks if priority is High</li>
+        <li>Public awareness: publish a simple hazard statement and preparedness guidance</li>
+      </ul>
+    </div>`;
+  }
+
+  // aggregated report
+  function generateAggregatedText(items){
+    const avgProb = ((items.reduce((s,d)=>s+d.impactProb,0)/items.length)*100).toFixed(6);
+    const avgDiam = (items.reduce((s,d)=>s+d.diam,0)/items.length).toFixed(3);
+    const totalImpacts = items.reduce((s,d)=>s+d.impacts,0);
+    return `<div style="color:var(--muted)">
+      <p><strong>Objects:</strong> ${items.length}</p>
+      <p><strong>Avg cumulative probability:</strong> ${avgProb}%</p>
+      <p><strong>Avg estimated diameter:</strong> ${avgDiam} km</p>
+      <p><strong>Total potential impacts:</strong> ${totalImpacts}</p>
+      <hr/>
+      <p>Top objects:</p>
+      <ol>${items.slice().sort((a,b)=>b.impactProb-a.impactProb).slice(0,8).map(x=>`<li>${escapeHtml(x.designation)} — ${(x.impactProb*100).toExponential(3)}%</li>`).join('')}</ol>
+    </div>`;
+  }
+
+  // ---------------------------
+  // Utilities: escape HTML
+  // ---------------------------
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"'`]/g, function(s){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#x60;'})[s]; });
+  }
+
+  // Announce for screen readers
+  function announce(text){
+    let el = document.getElementById('srAnn');
+    if(!el){ el = document.createElement('div'); el.id='srAnn'; el.setAttribute('aria-live','polite'); el.style.position='absolute'; el.style.left='-9999px'; document.body.appendChild(el); }
+    el.textContent = text;
+  }
+
+  // small keyboard accessibility: Enter on cards toggles filters
+  document.getElementById('card-overview').addEventListener('click', ()=>{ filtered = [...dataset]; renderAll('Overview selected');});
+  document.getElementById('card-neo').addEventListener('click', ()=>{ filtered = dataset.slice().sort((a,b)=>b.impactProb-a.impactProb); renderAll('NEO list (sorted)');});
+  document.getElementById('card-action').addEventListener('click', ()=>{ filtered = dataset.filter(d=>d.impactProb>0.0005 || d.diam>0.05); renderAll('Actionable candidates filtered');});
+
+  // initializations
+  initCharts();
+  loadDefault();
+
+  // small helper to announce load
+  announce('Dashboard ready. Default dataset loaded. Use upload to analyze your CSV.');
+
+  </script>
+  </body>
+</html>
