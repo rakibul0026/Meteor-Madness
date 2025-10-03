@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asteroid Impact Prediction – Nebula Nexus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      background: radial-gradient(ellipse at bottom, #0b1220 0%, #05010a 100%);
+      color: #eef3ff;
+      font-family: 'ui-sans-serif', sans-serif;
+    }
+    .starfield::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+      opacity: 0.2;
+      z-index: -1;
+      animation: twinkle 10s infinite;
+    }
+    @keyframes twinkle {
+      from {opacity: 0.2;}
+      50% {opacity: 0.4;}
+      to {opacity: 0.2;}
+    }
+    .glow {
+      text-shadow: 0 0 10px #00f0ff, 0 0 25px #00f0ff;
+    }
+  </style>
+</head>
+<body class="starfield">
+
+  <header class="bg-black/70 backdrop-blur-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+    <h1 class="text-xl font-bold text-yellow-400">Nebula Nexus</h1>
+    <nav class="flex space-x-3 text-base text-white flex-nowrap overflow-x-auto">
+      <a href="p2.html" class="hover:text-cyan-400 transition whitespace-nowrap">Home</a>
+      <a href="controls.html" class="hover:text-cyan-400 transition whitespace-nowrap">Asteroids Effect</a>
+      <a href="dashboard.html" class="hover:text-cyan-400 transition whitespace-nowrap">Risk Dashboard</a>
+       <a href="prediction.html" class="text-cyan-400 font-bold whitespace-nowrap">Asteroid Prediction</a>
+      
+      <a href="asteroid_watch.html" class="hover:text-cyan-400 transition whitespace-nowrap">Asteroid Tracking & Defense</a>
+      <a href="p.html" class="hover:text-cyan-400 transition whitespace-nowrap">NASA Research & History</a>
+      <a href="team_member.html" class="hover:text-cyan-400 transition whitespace-nowrap">Team Members</a>
+     
+    </nav>
+  </div>
+</header>
+
+  <!-- Hero Section -->
+  <section class="text-center py-20">
+    <h2 class="text-4xl md:text-6xl font-bold glow mb-4">☄️ Asteroid Impact Prediction</h2>
+    <p class="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto">Powered by NASA's Sentry-II System – Predict potential impacts with probabilistic modeling and simulations.</p>
+  </section>
+
+  <!-- Prediction Tool Section -->
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Controls -->
+      <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-xl border border-cyan-500/30">
+        <h3 class="text-2xl font-bold mb-4 glow">Enter Asteroid Parameters</h3>
+        <div class="space-y-4">
+          <label class="block text-sm font-medium text-gray-300">Asteroid ID (e.g., 101955 for Bennu)</label>
+          <input id="asteroidId" type="text" class="w-full p-3 bg-gray-700 rounded-lg border border-gray-600" placeholder="Enter NEO ID">
+
+          <label class="block text-sm font-medium text-gray-300">Diameter (m)</label>
+          <input id="diameter" type="number" value="100" min="1" class="w-full p-3 bg-gray-700 rounded-lg border border-gray-600">
+
+          <label class="block text-sm font-medium text-gray-300">Velocity (km/s)</label>
+          <input id="velocity" type="number" value="20" min="1" step="0.1" class="w-full p-3 bg-gray-700 rounded-lg border border-gray-600">
+
+          <label class="block text-sm font-medium text-gray-300">Approach Date (YYYY-MM-DD)</label>
+          <input id="approachDate" type="date" class="w-full p-3 bg-gray-700 rounded-lg border border-gray-600">
+
+          <button onclick="predictImpact()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-3 rounded-lg font-bold hover:from-blue-500 hover:to-purple-500 transition">Predict Impact</button>
+        </div>
+        <div id="predictionResult" class="mt-6 p-4 bg-gray-900 rounded-lg hidden">
+          <h4 class="font-bold text-lg mb-2">Prediction Results:</h4>
+          <pre id="resultText" class="text-sm overflow-auto max-h-40"></pre>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div id="map" class="h-96 rounded-xl border border-cyan-500/30"></div>
+    </div>
+  </section>
+
+  <!-- Info Section -->
+  <section class="max-w-4xl mx-auto px-6 py-12 text-center">
+    <h3 class="text-2xl font-bold mb-4 glow">How It Works</h3>
+    <p class="text-gray-300 mb-6">This tool uses simplified models inspired by NASA's Sentry-II impact monitoring system<grok-card data-id="794cd2" data-type="citation_card"></grok-card> and Probabilistic Asteroid Impact Risk (PAIR) assessments<grok-card data-id="568253" data-type="citation_card"></grok-card>. Enter parameters to simulate entry, airburst, and potential damage. For real threats, visit NASA's CNEOS Sentry system.</p>
+    <div class="grid md:grid-cols-3 gap-4 text-left">
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h4 class="font-bold text-cyan-400">Sentry-II Algorithm</h4>
+        <p class="text-sm text-gray-300">Models thousands of orbital paths to compute impact probabilities as low as 1 in 10 million.</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h4 class="font-bold text-cyan-400">Monte Carlo Simulations</h4>
+        <p class="text-sm text-gray-300">Evaluates millions of scenarios for blast waves, tsunamis, and global effects using supercomputing tools like Cart3D.</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h4 class="font-bold text-cyan-400">Risk Assessment</h4>
+        <p class="text-sm text-gray-300">From local damage to planetary-scale hazards, anchored in NASA's ATAP project.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-black/70 py-6 text-center text-gray-500">
+    <p>© 2025 Nebula Nexus – Educational Tool for NASA Space Apps Challenge</p>
+  </footer>
+
+  <script>
+    // Initialize Leaflet Map
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Simplified Prediction Function (Demo - uses heuristics based on NASA models)
+    function predictImpact() {
+      const id = document.getElementById('asteroidId').value;
+      const diam = parseFloat(document.getElementById('diameter').value) || 100;
+      const vel = parseFloat(document.getElementById('velocity').value) || 20;
+      const date = document.getElementById('approachDate').value;
+
+      if (!id && !date) {
+        alert('Enter at least an ID or date for prediction.');
+        return;
+      }
+
+      // Demo calculation inspired by PAIR and energy models
+      const mass = (4/3) * Math.PI * Math.pow(diam/2, 3) * 3000; // Assume density 3000 kg/m³
+      const energyMt = 0.5 * mass * Math.pow(vel * 1000, 2) / 4.184e15; // Megatons TNT
+      const prob = Math.random() * 0.001 + 0.000001; // Simulated low probability
+      const risk = energyMt > 1 ? 'High (Regional/Global)' : energyMt > 0.01 ? 'Medium (Local)' : 'Low';
+
+      // Simulate impact location (random for demo)
+      const lat = (Math.random() - 0.5) * 180;
+      const lng = (Math.random() - 0.5) * 360;
+      L.marker([lat, lng]).addTo(map).bindPopup(`Predicted Impact: ${energyMt.toFixed(2)} Mt<br>Probability: ${(prob*100).toFixed(6)}%`).openPopup();
+      map.setView([lat, lng], 5);
+
+      document.getElementById('resultText').textContent = `
+ID/Name: ${id || 'Simulated'}
+Diameter: ${diam} m
+Velocity: ${vel} km/s
+Approach: ${date || 'TBD'}
+Energy: ${energyMt.toFixed(2)} Megatons TNT
+Impact Probability: ${(prob*100).toFixed(6)}%
+Risk Level: ${risk}
+Location: Lat ${lat.toFixed(2)}, Lng ${lng.toFixed(2)}
+Note: This is a demo simulation. Real predictions use NASA's Sentry-II.
+      `;
+      document.getElementById('predictionResult').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
